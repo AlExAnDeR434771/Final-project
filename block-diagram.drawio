@@ -1,0 +1,79 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.0">
+  <diagram name="Страница-1" id="mymyyb0M2gdCfKTL90Qp">
+    <mxGraphModel dx="815" dy="1937" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-2" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" value="Пользователь" vertex="1">
+          <mxGeometry height="360" width="150" x="70" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-3" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" value="Программа" vertex="1">
+          <mxGeometry height="360" width="150" x="367" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-4" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" value="Сайты олимпиад" vertex="1">
+          <mxGeometry height="140" width="150" x="600" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-5" parent="1" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#B3B3B3;height=20;width=40;" value="loop" vertex="1">
+          <mxGeometry height="155" width="291" x="431" y="-975" as="geometry" />
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-6" parent="B6BFjTNv4TjoPHwMbfsI-5" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" value="Поиск данных" vertex="1">
+          <mxGeometry height="20" width="251" x="40" as="geometry" />
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-7" edge="1" parent="1" source="B6BFjTNv4TjoPHwMbfsI-2" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" target="B6BFjTNv4TjoPHwMbfsI-3" value="Ввод критериев фильтрации">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="302" y="-1031" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-9" edge="1" parent="1" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" value="Запрос данных по фильтру">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="585" y="-894" />
+            </Array>
+            <mxPoint x="441.32352941176464" y="-894" as="sourcePoint" />
+            <mxPoint x="670" y="-894" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-10" edge="1" parent="1" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" value="Возврат списка олимпиад">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="588" y="-840" />
+            </Array>
+            <mxPoint x="670" y="-840" as="sourcePoint" />
+            <mxPoint x="441.32352941176464" y="-840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-11" edge="1" parent="1" style="curved=1;endArrow=block;rounded=0;" value="Парсинг названий и ссылок">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="493" y="-805" />
+              <mxPoint x="493" y="-775" />
+            </Array>
+            <mxPoint x="441.32352941176464" y="-805.0000000000002" as="sourcePoint" />
+            <mxPoint x="441.32352941176464" y="-775.0000000000002" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-29" edge="1" parent="1" style="curved=1;endArrow=block;rounded=0;" value="Обработка параметров фильтра">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="491.67647058823536" y="-1019.9999999999998" />
+              <mxPoint x="491.67647058823536" y="-989.9999999999998" />
+            </Array>
+            <mxPoint x="440" y="-1020" as="sourcePoint" />
+            <mxPoint x="440" y="-990" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-30" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;fontSize=12;startSize=8;endSize=8;curved=1;" target="B6BFjTNv4TjoPHwMbfsI-2" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="440" y="-760" as="sourcePoint" />
+            <mxPoint x="240.00352941176465" y="-760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="B6BFjTNv4TjoPHwMbfsI-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=16;" value="&lt;span style=&quot;font-size: 11px; text-wrap-mode: nowrap; background-color: rgb(255, 255, 255);&quot;&gt;Вывод списка (Название, Ссылка на сайт)&lt;/span&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="250" y="-790" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
