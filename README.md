@@ -1,4 +1,4 @@
-            SSOR (Searching and storing Olympiad results)
+SSOR (Searching and storing Olympiad results)
 -
 
 1 Что? Что вы собираетесь делать?
