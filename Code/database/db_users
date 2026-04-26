@@ -1,0 +1,65 @@
+# База данных пользователей (CSV)
+import csv
+import os
+
+CSV_FILE = "data/users.csv"
+
+class UsersDatabase:
+# Класс для работы с пользователями
+
+    def __init__(self):
+        self._init_db()
+
+    def _init_db(self):
+        os.makedirs(os.path.dirname(CSV_FILE), exist_ok=True)
+        if not os.path.exists(CSV_FILE):
+            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+                csv.writer(f).writerow(["login", "password_hash", "fullname_enc", "dob_enc"])
+
+    def user_exists(self, login: str) -> bool:
+        with open(CSV_FILE, "r", encoding="utf-8", newline="") as f:
+            return any(row.get("login") == login for row in csv.DictReader(f))
+
+    def save_user(self, login: str, pwd_hash: str, fio_enc: str, dob_enc: str):
+        if not self.user_exists(login):
+            with open(CSV_FILE, "a", encoding="utf-8", newline="") as f:
+                csv.writer(f).writerow([login, pwd_hash, fio_enc, dob_enc])
+
+    def get_password_hash(self, login: str) -> str:
+        with open(CSV_FILE, "r", encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                if row.get("login") == login:
+                    return row.get("password_hash", "")
+        return ""
+
+    def get_user_data(self, login: str, field: str) -> str:
+        with open(CSV_FILE, "r", encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                if row.get("login") == login:
+                    return row.get(field, "")
+        return ""
+
+
+# Функции для совместимости со старым кодом
+_db = None
+
+def _get_db():
+    global _db
+    if _db is None:
+        _db = UsersDatabase()
+    return _db
+
+def init():
+    _get_db()._init_db()
+
+def user_exists(login: str) -> bool:
+    return _get_db().user_exists(login)
+
+def save_user(login: str, pwd_hash: str, fio_enc: str, dob_enc: str):
+    _get_db().save_user(login, pwd_hash, fio_enc, dob_enc)
+
+def get_stored_hash(login: str) -> str:
+    return _get_db().get_password_hash(login)
+
+def get_user_data(login: str, field: str) -> str:
+    return _get_db().get_user_data(login, field)
