@@ -1,0 +1,62 @@
+# Главное окно поиска (Логика)
+import customtkinter as ctk
+import threading
+from gui.widgets.dashboard_header import DashboardHeader
+from gui.widgets.search_panel import SearchPanel
+from gui.widgets.ol_table import OlympiadTable
+from gui.widgets.status_bar import StatusBar
+from gui.dialogs.filter_dialog import FilterDialog
+from parsers import parse_olympiads
+from parsers.web_parser import find_urls
+
+
+class MainWindow:
+    def __init__(self, parent, user, on_logout):
+        self.parent = parent
+        self.user = user
+        self.on_logout = on_logout
+        self.current_filters = None
+        self.current_filter_tag = None
+
+        self.frame = ctk.CTkFrame(parent, fg_color="#1a3a52")
+        self.frame.pack(fill="both", expand=True)
+
+        # Компоненты
+        DashboardHeader(self.frame, user, on_logout).pack(fill="x")
+        self.panel = SearchPanel(self.frame, self._open_filters, self._start_search)
+        self.panel.pack(fill="x", pady=10, padx=20)
+
+        self.table = OlympiadTable(self.frame)
+        self.table.pack(fill="both", expand=True, padx=20, pady=10)
+
+        self.status = StatusBar(self.frame)
+        self.status.pack(pady=5)
+
+    def _open_filters(self):
+        dialog = FilterDialog(self.frame)
+        if dialog.result:
+            self.current_filters = dialog.result
+            f = self.current_filters
+            self.panel.update_filter_label(f"{f['subject']} | {f['grade']} кл.")
+            self.current_filter_tag = f"П:{f['subject']}|К:{f['grade']}|Д:{f['calendar']}|Ф:{f['format']}|В:{'Да' if f['residential'] else 'Нет'}"
+
+    def _start_search(self):
+        if not self.current_filters: return self.status.show_error("⚠️ Выберите фильтры")
+        self.status.set("🔄 Поиск идёт...")
+        self.table.clear()
+        threading.Thread(target=self._run_search, daemon=True).start()
+
+    def _run_search(self):
+        try:
+            parse_olympiads(self.current_filter_tag, self.current_filters)
+            results = find_urls(self.current_filter_tag)
+            self.frame.after(0, lambda: self._display_results(results))
+        except Exception as e:
+            self.frame.after(0, lambda: self.status.set(f"❌ Ошибка: {e}"))
+
+    def _display_results(self, results):
+        self.table.load_data(results)
+        self.status.set(f"✅ Найдено {len(results)} олимпиад")
+        if results:
+            from tkinter import messagebox
+            messagebox.showinfo("🎉", f"Поиск завершён!\nНайдено {len(results)} олимпиад")
