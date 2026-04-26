@@ -1,0 +1,69 @@
+# Извлечение данных из HTML-страницы
+from bs4 import BeautifulSoup
+from config import MAX_OLYMPIADS
+
+
+def _split_name_and_desc(text: str) -> tuple[str, str]:
+    """Разделяет полный текст на название и описание"""
+    name, desc = text, ""
+
+    # Стратегия 1: разделение по кавычкам-ёлочкам
+    if '»' in text:
+        parts = text.split('»', 1)
+        if len(parts) == 2 and len(parts[0]) > 10:
+            name = parts[0].strip() + '»'
+            desc = parts[1].strip()
+
+    # Стратегия 2: поиск по ключевым словам
+    if not desc or len(desc) < 10:
+        markers = ['Финал', 'Пригласительный', 'Опубликованы', 'Идет',
+                   'Ожидаются', 'Расписание', 'пройдет', 'проходит', 'начнется']
+        for marker in markers:
+            idx = text.find(marker)
+            if 30 < idx < 120:
+                name = text[:idx].strip()
+                desc = text[idx:].strip()
+                break
+
+    # Стратегия 3: разделение по длине
+    if not desc and len(text) > 100:
+        name = text[:80].strip()
+        desc = text[80:].strip()
+
+    # Нормализация
+    name = ' '.join(name.split())[:120]
+    desc = ' '.join(desc.split())[:180] if desc.strip() else "Описание отсутствует"
+
+    return name, desc
+
+
+def extract_olympiads(soup: BeautifulSoup) -> list[tuple]:
+    """Извлекает все карточки олимпиад из BeautifulSoup"""
+    olympiads, seen = [], set()
+    cards = soup.find_all('div', class_='olimpiada')
+    print(f"🔍 Найдено блоков: {len(cards)}")
+
+    for card in cards:
+        try:
+            info = card.find('div', class_='o-info')
+            if not info:
+                continue
+
+            full_text = info.get_text(separator=' ', strip=True)
+            if len(full_text) < 20:
+                continue
+
+            name, desc = _split_name_and_desc(full_text)
+
+            # Уникальность по названию
+            name_key = name.lower()
+            if name_key not in seen:
+                olympiads.append((name, desc, ""))
+                seen.add(name_key)
+
+        except Exception as e:
+            print(f"⚠️ Ошибка обработки: {e}")
+            continue
+
+    print(f"✅ Извлечено всего: {len(olympiads)}")
+    return olympiads[:MAX_OLYMPIADS]
