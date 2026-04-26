@@ -1,0 +1,59 @@
+# Фильтрация олимпиад по параметрам
+def filter_olympiads(olympiads: list[tuple], filter_dict: dict) -> list[tuple]:
+ 
+#    Фильтрует список олимпиад по предмету и классу.
+#
+#    :param olympiads: список кортежей (name, desc, url)
+#    :param filter_dict: словарь с параметрами фильтра
+#    :return: отфильтрованный список
+
+    if not filter_dict:
+        return olympiads
+
+    subj = filter_dict.get("subject", "Все предметы").lower()
+    grade = filter_dict.get("grade", "Любой")
+
+# Если фильтры не заданы — возвращаем всё
+    if subj == "все предметы" and grade == "Любой":
+        return olympiads
+
+    filtered = []
+    for name, desc, url in olympiads:
+        name_lower = name.lower()
+        desc_lower = desc.lower()
+        full_text = name_lower + " " + desc_lower
+
+        # ✅ Проверка соответствия предмету
+        subject_match = (subj == "все предметы" or subj in full_text)
+
+        # ✅ Проверка соответствия классу
+        grade_match = _check_grade_match(grade, full_text)
+
+        if subject_match and grade_match:
+            filtered.append((name, desc, url))
+
+    print(f"✅ После фильтрации: {len(filtered)} (было {len(olympiads)})")
+    return filtered
+
+def _check_grade_match(grade: str, full_text: str) -> bool:
+# Проверяет, подходит ли олимпиада для указанного класса
+    if grade == "Любой":
+        return True
+
+    # Точное совпадение: "7 класс"
+    if f"{grade} класс" in full_text:
+        return True
+
+    # Диапазон: "5-11 классы", "7-9 класс"
+    if f"{grade}-" in full_text or f"-{grade} " in full_text:
+        return True
+
+    # Универсальная олимпиада для диапазона
+    if "классы" in full_text and "5-11" in full_text:
+        try:
+            if 5 <= int(grade) <= 11:
+                return True
+        except ValueError:
+            pass
+
+    return False
