@@ -2,7 +2,6 @@
 from bs4 import BeautifulSoup
 from config import MAX_OLYMPIADS
 
-
 def _split_name_and_desc(text: str) -> tuple[str, str]:
     """Разделяет полный текст на название и описание"""
     name, desc = text, ""
@@ -35,7 +34,6 @@ def _split_name_and_desc(text: str) -> tuple[str, str]:
     desc = ' '.join(desc.split())[:180] if desc.strip() else "Описание отсутствует"
 
     return name, desc
-
 
 def extract_olympiads(soup: BeautifulSoup) -> list[tuple]:
     """Извлекает все карточки олимпиад из BeautifulSoup"""
