@@ -1,0 +1,21 @@
+# Строка статуса
+import customtkinter as ctk
+
+class StatusBar(ctk.CTkFrame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, height=30, fg_color="#e0e0e0", **kwargs)
+        self.pack_propagate(False)
+        self.label = ctk.CTkLabel(self, text="Готов", text_color="#333", anchor="w")
+        self.label.pack(fill="both", padx=10)
+
+    def set(self, text: str):
+        self.label.configure(text=text)
+
+    def show_error(self, text: str):
+        self.label.configure(text=f"❌ {text}", text_color="#f44336")
+
+    def show_warning(self, text: str):
+        self.label.configure(text=f"⚠️ {text}", text_color="#FF9800")
+
+    def show_success(self, text: str):
+        self.label.configure(text=f"✅ {text}", text_color="#4CAF50")
