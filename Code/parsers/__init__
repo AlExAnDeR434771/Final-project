@@ -1,0 +1,4 @@
+# Пакет парсеров — экспорт главной функции
+from .parser_main import parse_olympiads
+
+__all__ = ['parse_olympiads']
