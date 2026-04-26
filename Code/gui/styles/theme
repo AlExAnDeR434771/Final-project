@@ -1,0 +1,31 @@
+# Тёмная сине-зелёная тема
+import customtkinter as ctk
+
+COLORS = {
+    "primary": "#1a3a52",        # Тёмно-синий фон
+    "secondary": "#0d2137",      # Очень тёмно-синий
+    "accent": "#4a9eff",         # Голубой акцент
+    "success": "#2d6a4f",        # Тёмно-зелёный
+    "success_hover": "#1b4332",  # Ещё темнее зелёный
+    "warning": "#d4a574",        # Приглушённый оранжевый
+    "error": "#c75b5b",          # Приглушённый красный
+    "text_primary": "#7ec8e3",   # Голубой текст
+    "text_secondary": "#5a9fb8", # Более тёмный голубой
+    "background": "#1a3a52",     # Основной фон
+    "surface": "#0d2137",        # Фон элементов
+}
+
+FONTS = {
+    "title": ctk.CTkFont(family="Arial", size=24, weight="bold"),
+    "heading": ctk.CTkFont(family="Arial", size=16, weight="bold"),
+    "body": ctk.CTkFont(family="Arial", size=13),
+    "small": ctk.CTkFont(family="Arial", size=11),
+    "large": ctk.CTkFont(family="Arial", size=18, weight="bold"),
+}
+
+SPACING = {"xs": 4, "sm": 8, "md": 16, "lg": 24, "xl": 32}
+
+
+def apply_theme():
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
