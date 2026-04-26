@@ -1,0 +1,4 @@
+# Пакет аутентификации
+from .registry import AuthManager
+
+__all__ = ['AuthManager']
