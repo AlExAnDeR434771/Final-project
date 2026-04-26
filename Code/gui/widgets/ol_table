@@ -1,0 +1,84 @@
+# Виджет таблицы результатов (исправлена ошибка padding)
+import customtkinter as ctk
+from tkinter import ttk
+from urllib.parse import urlparse
+
+
+class OlympiadTable(ctk.CTkFrame):
+    COLUMNS = [
+        ("№", 60, "center"),
+        ("name", 400, "w"),
+        ("desc", 450, "w"),
+        ("url", 300, "w"),
+    ]
+
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self._create_treeview()
+
+    def _create_treeview(self):
+        container = ctk.CTkFrame(self, fg_color="transparent")
+        container.pack(fill="both", expand=True)
+
+        # Настройка стилей для тёмной темы
+        style = ttk.Style()
+        style.configure("Treeview.Heading",
+                       font=("Arial", 14, "bold"),
+                       background="#1b4332",
+                       foreground="#7ec8e3")
+        style.configure("Treeview",
+                       font=("Arial", 12),
+                       rowheight=40,
+                       background="#0d2137",
+                       foreground="#7ec8e3",
+                       fieldbackground="#0d2137")
+        style.map("Treeview",
+                 background=[('selected', '#2d6a4f')],
+                 foreground=[('selected', '#ffffff')])
+
+        self.tree = ttk.Treeview(
+            container,
+            columns=[col[0] for col in self.COLUMNS],
+            show="headings",
+            height=15
+        )
+
+        # ✅ ИСПРАВЛЕНО: убран параметр padding=8 (не поддерживается ttk)
+        for col_id, width, anchor in self.COLUMNS:
+            self.tree.heading(col_id, text=self._get_header_text(col_id))
+            self.tree.column(col_id, width=width, anchor=anchor)
+
+        # Скроллбар
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        self.tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+    def _get_header_text(self, col_id: str) -> str:
+        headers = {"№": "№", "name": "Название олимпиады", "desc": "Описание", "url": "Сайт"}
+        return headers.get(col_id, col_id)
+
+    def load_data(self, olympiads: list[tuple]):
+        self.tree.delete(*self.tree.get_children())
+        for i, (name, desc, url) in enumerate(olympiads, 1):
+            short_desc = (desc.split('.')[0][:80] + "...") if len(desc) > 80 else desc
+            url_display = self._format_url(url)
+            self.tree.insert("", "end", values=(
+                i,
+                name[:60] + "..." if len(name) > 60 else name,
+                short_desc,
+                url_display
+            ))
+
+    def _format_url(self, url: str) -> str:
+        if not url or url in ("Не найдено", "Ошибка поиска"):
+            return "—"
+        try:
+            domain = urlparse(url).netloc.replace("www.", "")
+            return domain if len(domain) < 35 else domain[:32] + "..."
+        except:
+            return url[:35] + "..." if len(url) > 35 else url
+
+    def clear(self):
+        self.tree.delete(*self.tree.get_children())
