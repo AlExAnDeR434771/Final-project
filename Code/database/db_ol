@@ -1,0 +1,90 @@
+# База данных олимпиад (CSV)
+import csv
+import os
+
+CSV_FILE = "data/olympiads.csv"
+FIELDNAMES = ["filter_tag", "name", "description", "url"]
+
+
+class OlympiadsDatabase:
+
+    def __init__(self):
+        self._init_db()
+
+    def _init_db(self):
+        os.makedirs(os.path.dirname(CSV_FILE), exist_ok=True)
+        if not os.path.exists(CSV_FILE):
+            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+                writer.writeheader()
+
+    def save_olympiads(self, filter_tag: str, data_list: list[tuple]):
+        """Сохраняет олимпиады, избегая дубликатов"""
+        existing = set()
+        if os.path.exists(CSV_FILE):
+            with open(CSV_FILE, "r", encoding="utf-8", newline="") as f:
+                for r in csv.DictReader(f):
+                    existing.add((r["filter_tag"], r["name"].lower()))
+
+        saved = 0
+        with open(CSV_FILE, "a", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+            for name, desc, url in data_list:
+                key = (filter_tag, name.lower())
+                if key not in existing:
+                    writer.writerow({
+                        "filter_tag": filter_tag,
+                        "name": name,
+                        "description": desc,
+                        "url": url
+                    })
+                    existing.add(key)
+                    saved += 1
+        print(f"💾 Сохранено в кэш: {saved} новых записей")
+
+    def get_olympiads(self, filter_tag: str) -> list[tuple]:
+        """Получает олимпиады по тегу фильтра"""
+        result = []
+        with open(CSV_FILE, "r", encoding="utf-8", newline="") as f:
+            for r in csv.DictReader(f):
+                if r.get("filter_tag") == filter_tag:
+                    result.append((r["name"], r["description"], r.get("url", "")))
+        return result
+
+    def update_url(self, filter_tag: str, name: str, url: str):
+        """Обновляет URL для олимпиады"""
+        rows, updated = [], False
+        with open(CSV_FILE, "r", encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["filter_tag"] == filter_tag and row["name"] == name and not row.get("url"):
+                    row["url"] = url
+                    updated = True
+                rows.append(row)
+
+        if updated:
+            with open(CSV_FILE, "w", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+                writer.writeheader()
+                writer.writerows(rows)
+
+# Функции для совместимости со старым кодом
+_db = None
+
+def _get_db():
+    global _db
+    if _db is None:
+        _db = OlympiadsDatabase()
+    return _db
+
+def init():
+    _get_db()._init_db()
+
+def save_olympiads(filter_tag: str, data_list: list[tuple]):
+    _get_db().save_olympiads(filter_tag, data_list)
+
+def get_olympiads(filter_tag: str) -> list[tuple]:
+    return _get_db().get_olympiads(filter_tag)
+
+def update_url(filter_tag: str, name: str, url: str):
+    _get_db().update_url(filter_tag, name, url)
