@@ -1,0 +1,4 @@
+# Пакет стилей
+from .theme import apply_theme, COLORS, FONTS, SPACING
+
+__all__ = ['apply_theme', 'COLORS', 'FONTS', 'SPACING']
