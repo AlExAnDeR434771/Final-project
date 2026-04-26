@@ -1,0 +1,49 @@
+# Окно создания профиля
+import customtkinter as ctk
+from gui.widgets.status_bar import StatusBar
+from profile import create_profile
+
+class ProfileWindow:
+    def __init__(self, parent, login, pwd_hash, profile_service, on_success):
+        self.login = login
+        self.pwd_hash = pwd_hash
+        self.profile_service = profile_service
+        self.on_success = on_success
+        self.frame = ctk.CTkFrame(parent)
+        self.frame.pack(fill="both", expand=True, padx=40, pady=40)
+        self._create_widgets()
+
+    def _create_widgets(self):
+        ctk.CTkLabel(
+            self.frame, text="👤 Создание профиля",
+            font=ctk.CTkFont(size=20, weight="bold")
+        ).pack(pady=20)
+
+        input_frame = ctk.CTkFrame(self.frame, fg_color="transparent")
+        input_frame.pack(pady=10)
+
+        ctk.CTkLabel(input_frame, text="ФИО:").grid(row=0, column=0, sticky="w", pady=8)
+        self.fio_entry = ctk.CTkEntry(input_frame, width=300)
+        self.fio_entry.grid(row=0, column=1, padx=15, pady=8)
+
+        ctk.CTkLabel(input_frame, text="Дата рождения (ДД.ММ.ГГГГ):").grid(row=1, column=0, sticky="w", pady=8)
+        self.dob_entry = ctk.CTkEntry(input_frame, width=300)
+        self.dob_entry.grid(row=1, column=1, padx=15, pady=8)
+
+        ctk.CTkButton(
+            self.frame, text="✅ Сохранить", command=self._on_save,
+            width=150, height=35, fg_color="#4CAF50"
+        ).pack(pady=25)
+
+        self.status = StatusBar(self.frame)
+        self.status.pack()
+
+    def _on_save(self):
+        fio = self.fio_entry.get().strip()
+        dob = self.dob_entry.get().strip()
+        result = create_profile(self.login, self.pwd_hash, fio, dob)
+        if result["success"]:
+            self.frame.destroy()
+            self.on_success({"login": self.login, "fio": fio})
+        else:
+            self.status.show_error(result["message"])
