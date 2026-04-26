@@ -1,0 +1,15 @@
+# Хеширование паролей (Стрибог-256, ГОСТ Р 34.11-2012)
+import gostcrypto
+
+def hash_streebog(password: str) -> str:
+
+# Принимает пароль, возвращает его хеш-строку (hex).
+# Используется алгоритм Стрибог-256.
+
+    try:
+        h = gostcrypto.gosthash.new('streebog256')
+        h.update(password.encode('utf-8'))
+        return h.hexdigest()
+    except Exception as e:
+        print(f"❌ Ошибка хеширования: {e}")
+        raise
