@@ -1,0 +1,4 @@
+# Пакет диалоговых окон
+from .filter_dialog import FilterDialog
+
+__all__ = ['FilterDialog']
