@@ -1,17 +1,11 @@
 # Пакет работы с данными (экспорт классов и функций)
-from .db_users import UsersDatabase, init as init_users, user_exists, save_user, get_stored_hash, get_user_data
-from .db_ol import OlympiadsDatabase, init as init_ol, save_olympiads, get_olympiads, update_url
+from .db_users import (init as init_users, user_exists, save_user, get_stored_hash, get_user_data,
+                       UsersDatabase)
+from .db_ol import init as init_ol, save_olympiads, get_olympiads, update_url, OlympiadsDatabase
 
-__all__ = [
-    # Классы
-    'UsersDatabase', 'OlympiadsDatabase',
-    # Функции для совместимости со старым кодом
-    'init_users', 'init_ol',
-    'user_exists', 'save_user', 'get_stored_hash', 'get_user_data',
-    'save_olympiads', 'get_olympiads', 'update_url'
-]
+__all__ = ['UsersDatabase', 'OlympiadsDatabase', 'init_users', 'init_ol', 'user_exists',
+           'save_user', 'get_stored_hash', 'get_user_data', 'save_olympiads', 'get_olympiads', 'update_url']
 
-# Для обратной совместимости: init() вызывает инициализацию обеих баз
 def init():
     init_users()
     init_ol()
