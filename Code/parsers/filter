@@ -1,59 +1,47 @@
 # Фильтрация олимпиад по параметрам
 def filter_olympiads(olympiads: list[tuple], filter_dict: dict) -> list[tuple]:
- 
-#    Фильтрует список олимпиад по предмету и классу.
-#
-#    :param olympiads: список кортежей (name, desc, url)
-#    :param filter_dict: словарь с параметрами фильтра
-#    :return: отфильтрованный список
-
     if not filter_dict:
         return olympiads
 
     subj = filter_dict.get("subject", "Все предметы").lower()
     grade = filter_dict.get("grade", "Любой")
+    fmt = filter_dict.get("format", "Все")
 
-# Если фильтры не заданы — возвращаем всё
-    if subj == "все предметы" and grade == "Любой":
+    # Если все фильтры "Все" — возвращаем всё
+    if subj == "все предметы" and grade == "Любой" and fmt == "Все":
         return olympiads
 
     filtered = []
     for name, desc, url in olympiads:
-        name_lower = name.lower()
-        desc_lower = desc.lower()
-        full_text = name_lower + " " + desc_lower
+        txt = f"{name} {desc}".lower()
 
-        # ✅ Проверка соответствия предмету
-        subject_match = (subj == "все предметы" or subj in full_text)
+        # ✅ Проверка предмета
+        subj_ok = subj == "все предметы" or subj in txt
 
-        # ✅ Проверка соответствия классу
-        grade_match = _check_grade_match(grade, full_text)
+        # ✅ Проверка класса (более строгая)
+        if grade == "Любой":
+            grade_ok = True
+        else:
+            # Точное совпадение: "11 класс"
+            grade_ok = f"{grade} класс" in txt
+            # Или диапазон: "10-11 классы", "5-11 классы"
+            if not grade_ok:
+                for range_text in ["5-11", "7-11", "8-11", "9-11", "10-11"]:
+                    if range_text in txt and int(grade) >= int(range_text.split("-")[0]):
+                        grade_ok = True
+                        break
 
-        if subject_match and grade_match:
+        # ✅ Проверка формата (если указан)
+        fmt_ok = True
+        if fmt == "Командные":
+            fmt_ok = "команд" in txt or "командн" in txt
+        elif fmt == "Личные":
+            fmt_ok = "личн" in txt or "индивидуальн" in txt
+        elif fmt == "Дистанционные":
+            fmt_ok = "дистанцион" in txt or "онлайн" in txt or "online" in txt
+
+        if subj_ok and grade_ok and fmt_ok:
             filtered.append((name, desc, url))
 
     print(f"✅ После фильтрации: {len(filtered)} (было {len(olympiads)})")
     return filtered
-
-def _check_grade_match(grade: str, full_text: str) -> bool:
-# Проверяет, подходит ли олимпиада для указанного класса
-    if grade == "Любой":
-        return True
-
-    # Точное совпадение: "7 класс"
-    if f"{grade} класс" in full_text:
-        return True
-
-    # Диапазон: "5-11 классы", "7-9 класс"
-    if f"{grade}-" in full_text or f"-{grade} " in full_text:
-        return True
-
-    # Универсальная олимпиада для диапазона
-    if "классы" in full_text and "5-11" in full_text:
-        try:
-            if 5 <= int(grade) <= 11:
-                return True
-        except ValueError:
-            pass
-
-    return False
