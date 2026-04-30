@@ -1,1 +1,11 @@
+# Глобальные настройки проекта
+OLIMPIADA_BASE = "https://olimpiada.ru"
+OLIMPIADA_ACTIVITIES = "https://olimpiada.ru/activities"
 
+# Ключи ГОСТ (32 байта ключ, 16 байт IV)
+KUZNECHIK_KEY = b"SecureKeyForKuznyechikAlgo32!!"
+KUZNECHIK_IV = b"InitVector123456"
+
+# Настройки
+REQUEST_TIMEOUT = 15
+MAX_OLYMPIADS = 1000
