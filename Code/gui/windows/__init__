@@ -1,6 +1,5 @@
 # Пакет окон приложения
 from .login_win import LoginWindow
-from .main_win import MainWindow  # ✅ main_win
-from .profile_win import ProfileWindow
+from .main_win import MainWindow
 
-__all__ = ['LoginWindow', 'MainWindow', 'ProfileWindow']
+__all__ = ['LoginWindow', 'MainWindow']
