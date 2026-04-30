@@ -5,10 +5,7 @@ from gui.widgets.dashboard_header import DashboardHeader
 from gui.widgets.search_panel import SearchPanel
 from gui.widgets.ol_table import OlympiadTable
 from gui.widgets.status_bar import StatusBar
-from gui.dialogs.filter_dialog import FilterDialog
-from parsers import parse_olympiads
-from parsers.web_parser import find_urls
-
+from parsers import parse_olympiads, find_urls
 
 class MainWindow:
     def __init__(self, parent, user, on_logout):
@@ -21,7 +18,6 @@ class MainWindow:
         self.frame = ctk.CTkFrame(parent, fg_color="#1a3a52")
         self.frame.pack(fill="both", expand=True)
 
-        # Компоненты
         DashboardHeader(self.frame, user, on_logout).pack(fill="x")
         self.panel = SearchPanel(self.frame, self._open_filters, self._start_search)
         self.panel.pack(fill="x", pady=10, padx=20)
@@ -33,13 +29,32 @@ class MainWindow:
         self.status.pack(pady=5)
 
     def _open_filters(self):
+# Открывает диалог и сохраняет фильтр с отладкой
+        from gui.dialogs.filter_dialog import FilterDialog
+
         dialog = FilterDialog(self.frame)
         if dialog.result:
             self.current_filters = dialog.result
             f = self.current_filters
-            self.panel.update_filter_label(f"{f['subject']} | {f['grade']} кл.")
-            self.current_filter_tag = f"П:{f['subject']}|К:{f['grade']}|Д:{f['calendar']}|Ф:{f['format']}|В:{'Да' if f['residential'] else 'Нет'}"
 
+# Формируем читаемый текст для интерфейса
+            parts = [f["subject"], f"{f['grade']} кл."]
+            if f["format"] != "Все": parts.append(f["format"])
+            if f["residential"]: parts.append("Выездные")
+            if f["calendar"] != "Когда угодно": parts.append(f["calendar"])
+
+            filter_text = " | ".join(parts)
+            self.panel.update_filter_label(filter_text)
+
+# Формируем ТЕГ для БД (должен точно совпадать при сохранении/чтении)
+            self.current_filter_tag = (
+                f"П:{f['subject']}|К:{f['grade']}|Д:{f['calendar']}|"
+                f"Ф:{f['format']}|В:{'Да' if f['residential'] else 'Нет'}"
+            )
+
+# Отладка: выводим тег в консоль
+            print(f"🏷️ Фильтр выбран: {filter_text}")
+            print(f"🏷️ Тег для БД: '{self.current_filter_tag}'")
     def _start_search(self):
         if not self.current_filters: return self.status.show_error("⚠️ Выберите фильтры")
         self.status.set("🔄 Поиск идёт...")
@@ -55,8 +70,27 @@ class MainWindow:
             self.frame.after(0, lambda: self.status.set(f"❌ Ошибка: {e}"))
 
     def _display_results(self, results):
+        self.table.clear()  # Сначала очищаем таблицу
+
+# Если результатов нет — показываем сообщение в таблице
+        if not results:
+            self.table.show_empty_message("🔍 Ничего не найдено")
+            self.status.set("✅ Олимпиад не найдено")
+            return
+
+# Если есть результаты — загружаем их
         self.table.load_data(results)
-        self.status.set(f"✅ Найдено {len(results)} олимпиад")
-        if results:
-            from tkinter import messagebox
-            messagebox.showinfo("🎉", f"Поиск завершён!\nНайдено {len(results)} олимпиад")
+
+# Корректное склонение
+        if len(results) == 1:
+            status_text = "✅ Найдена 1 олимпиада"
+        elif 2 <= len(results) <= 4:
+            status_text = f"✅ Найдено {len(results)} олимпиады"
+        else:
+            status_text = f"✅ Найдено {len(results)} олимпиад"
+
+        self.status.set(status_text)
+
+# Уведомление только если есть результаты
+        from tkinter import messagebox
+        messagebox.showinfo("🎉", f"Поиск завершён!\n{status_text}")
