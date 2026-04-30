@@ -3,44 +3,22 @@ import base64
 import hashlib
 from config import KUZNECHIK_KEY, KUZNECHIK_IV
 
-
-def _pad( bytes, block_size: int = 16) -> bytes:
-# PKCS#7 padding для блочного шифра
+def _pad(data: bytes, block_size: int = 16) -> bytes:
     pad_len = block_size - len(data) % block_size
     return data + bytes([pad_len] * pad_len)
 
-
 def encrypt_kuznyechik(text: str) -> str:
-
-# Шифрует текст. 
-# Приоритет: ГОСТ Кузнечик -> Резерв: AES-256
-
-# 1. Пробуем ГОСТ
     try:
         import gostcrypto
-# Перебираем режимы на случай несовместимости версий
         for mode in ['CBC', 'CTR', 'CFB']:
             try:
                 cipher = gostcrypto.gostcipher.new('kuznechik', KUZNECHIK_KEY, mode=mode, iv=KUZNECHIK_IV)
-                padded = _pad(text.encode('utf-8'))
-                encrypted = cipher.encrypt(padded)
-                return base64.b64encode(encrypted).decode('utf-8')
-            except Exception:
-                continue
-    except ImportError:
-        pass
-    except Exception as e:
-        print(f"⚠️ ГОСТ шифрование не сработало: {e}")
-
-# 2. Fallback на AES-256 (если ГОСТ недоступен)
+                return base64.b64encode(cipher.encrypt(_pad(text.encode('utf-8')))).decode('utf-8')
+            except Exception: continue
+    except Exception: pass
     return _encrypt_fallback(text)
 
 def decrypt_kuznyechik(encrypted_text: str) -> str:
-    """
-    Расшифровывает текст. 
-    Автоматически определяет алгоритм (пытается ГОСТ, затем AES).
-    """
-# 1. Пробуем ГОСТ
     try:
         import gostcrypto
         decoded = base64.b64decode(encrypted_text)
@@ -48,43 +26,30 @@ def decrypt_kuznyechik(encrypted_text: str) -> str:
             try:
                 cipher = gostcrypto.gostcipher.new('kuznechik', KUZNECHIK_KEY, mode=mode, iv=KUZNECHIK_IV)
                 decrypted = cipher.decrypt(decoded)
-                # Убираем padding
                 pad_len = decrypted[-1]
-                result = decrypted[:-pad_len].decode('utf-8') if 1 <= pad_len <= 16 else decrypted.decode('utf-8').rstrip()
-                if result.strip():
-                    return result.strip()
-            except Exception:
-                continue
-    except Exception:
-        pass
-
-# 2. Fallback на AES
+                res = decrypted[:-pad_len].decode('utf-8') if 1 <= pad_len <= 16\
+                    else decrypted.decode('utf-8').rstrip()
+                if res.strip(): return res.strip()
+            except Exception: continue
+    except Exception: pass
     return _decrypt_fallback(encrypted_text)
 
 def _encrypt_fallback(text: str) -> str:
-# Запасной вариант шифрования (AES-256)
     try:
         from Crypto.Cipher import AES
         from Crypto.Util.Padding import pad
-        # Генерируем ключ из статической строки (для совместимости с old data)
         key = hashlib.sha256(b'backup_key_123').digest()
-        cipher = AES.new(key, AES.MODE_CBC, b'0123456789abcdef')
-        return base64.b64encode(cipher.encrypt(pad(text.encode(), 16))).decode()
-    except Exception as e:
-        print(f"❌ Ошибка AES шифрования: {e}")
-        # Последний резерв
-        return base64.b64encode(text.encode('utf-8')).decode('utf-8')
+        return base64.b64encode(AES.new(key, AES.MODE_CBC, b'0123456789abcdef').encrypt
+                                (pad(text.encode(), 16))).decode()
+    except: return base64.b64encode(text.encode('utf-8')).decode('utf-8')
 
 def _decrypt_fallback(encrypted_text: str) -> str:
-# Запасной вариант расшифровки (AES-256)
     try:
         from Crypto.Cipher import AES
         from Crypto.Util.Padding import unpad
         key = hashlib.sha256(b'backup_key_123').digest()
-        cipher = AES.new(key, AES.MODE_CBC, b'0123456789abcdef')
-        return unpad(cipher.decrypt(base64.b64decode(encrypted_text)), 16).decode('utf-8')
-    except Exception:
-        try:
-            return base64.b64decode(encrypted_text).decode('utf-8')
-        except:
-            return "[ошибка расшифровки]"
+        return unpad(AES.new(key, AES.MODE_CBC,
+                             b'0123456789abcdef').decrypt(base64.b64decode(encrypted_text)), 16).decode('utf-8')
+    except:
+        try: return base64.b64decode(encrypted_text).decode('utf-8')
+        except: return "[ошибка расшифровки]"
