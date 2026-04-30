@@ -1,104 +1,59 @@
 # Логика регистрации и входа в систему
 import re
 from datetime import datetime
-from database.db_users import init_db, user_exists, save_user, get_stored_hash
+from database.db_users import user_exists, save_user, get_stored_hash
 from crypto.hashing import hash_streebog
 
 class AuthManager:
-# Менеджер аутентификации
-
     @staticmethod
     def validate_login(login: str) -> tuple[bool, str]:
-        if len(login) < 3:
-            return False, "⚠️ Логин: минимум 3 символа"
-        if len(login) > 20:
-            return False, "⚠️ Логин: максимум 20 символов"
-        if not re.match(r'^[a-zA-Zа-яА-ЯёЁ0-9_]+$', login):
-            return False, "⚠️ Логин: только буквы, цифры, _"
+        if len(login) < 3: return False, "⚠️ Логин: минимум 3 символа"
+        if len(login) > 20: return False, "⚠️ Логин: максимум 20 символов"
+        if not re.match(r'^[a-zA-Zа-яА-ЯёЁ0-9_]+$', login): return (False,
+                                                                    "⚠️ Логин: только буквы, цифры, _")
         return True, ""
 
     @staticmethod
     def validate_password(password: str) -> tuple[bool, str]:
-        if len(password) < 6:
-            return False, "⚠️ Пароль: минимум 6 символов"
+        if len(password) < 6: return False, "⚠️ Пароль: минимум 6 символов"
         return True, ""
-
-    @staticmethod
-    def validate_fio(fio: str) -> tuple[bool, str]:
-        fio = fio.strip()
-        parts = fio.split()
-        if len(parts) < 3:
-            return False, "⚠️ ФИО: нужно Фамилия Имя Отчество"
-        if len(parts) > 4:
-            return False, "⚠️ ФИО: не более 4 слов"
-        if not re.match(r'^[а-яА-ЯёЁ\-\s]+$', fio):
-            return False, "⚠️ ФИО: только кириллица"
-        return True, ""
-
-    @staticmethod
-    def validate_dob(dob: str) -> tuple[bool, str]:
-        try:
-            dt = datetime.strptime(dob, '%d.%m.%Y')
-            if dt > datetime.today():
-                return False, "⚠️ Дата: не может быть в будущем"
-            age = datetime.today().year - dt.year
-            if not (1 <= age <= 122):
-                return False, f"⚠️ Возраст: 1-122 года (год: {datetime.today().year - 122}-{datetime.today().year - 1})"
-            return True, ""
-        except ValueError:
-            return False, "⚠️ Дата: формат ДД.ММ.ГГГГ"
 
     def login(self, login: str, password: str) -> dict:
-# Пытается выполнить вход
         valid, msg = self.validate_login(login)
         if not valid: return {"success": False, "message": msg}
-
         valid, msg = self.validate_password(password)
         if not valid: return {"success": False, "message": msg}
-
-        if not user_exists(login):
-            return {"success": False, "message": "⚠️ Пользователь не найден"}
-
-        pwd_hash = hash_streebog(password)
-        stored_hash = get_stored_hash(login)
-
-        if stored_hash == pwd_hash:
-            return {"success": True, "message": "Вход выполнен", "login": login, "pwd_hash": pwd_hash,
+        if not user_exists(login): return {"success": False, "message": "⚠️ Пользователь не найден"}
+        if get_stored_hash(login) == hash_streebog(password):
+            return {"success": True, "message": "Вход выполнен", "login": login,
+                    "pwd_hash": hash_streebog(password),
                     "is_existing": True}
-        else:
-            return {"success": False, "message": "⚠️ Неверный пароль"}
+        return {"success": False, "message": "⚠️ Неверный пароль"}
 
     def register(self, login: str, password: str, fio: str, dob: str) -> dict:
-# Регистрирует нового пользователя
-# Валидация логина/пароля
         valid, msg = self.validate_login(login)
         if not valid: return {"success": False, "message": msg}
-
         valid, msg = self.validate_password(password)
         if not valid: return {"success": False, "message": msg}
 
-# Валидация ФИО и Даты
-        valid, msg = self.validate_fio(fio)
-        if not valid: return {"success": False, "message": msg}
+        fio = fio.strip()
+        if len(fio.split()) < 3: return {"success": False, "message": "⚠️ ФИО: нужно Фамилия Имя Отчество"}
+        if not re.match(r'^[а-яА-ЯёЁ\-\s]+$', fio): return {"success": False, "message": "⚠️ ФИО: только кириллица"}
 
-        valid, msg = self.validate_dob(dob)
-        if not valid: return {"success": False, "message": msg}
+        try:
+            dt = datetime.strptime(dob, '%d.%m.%Y')
+            if dt > datetime.today(): return {"success": False, "message": "⚠️ Дата: не может быть в будущем"}
+            if not (1 <= (datetime.today().year - dt.year) <= 122): return {"success": False,
+                                                                            "message": "⚠️ Возраст: 1-122 года"}
+        except ValueError:
+            return {"success": False, "message": "⚠️ Дата: формат ДД.ММ.ГГГГ"}
 
-# Проверка уникальности
-        if user_exists(login):
-            return {"success": False, "message": "⚠️ Логин уже занят"}
+        if user_exists(login): return {"success": False, "message": "⚠️ Логин уже занят"}
 
-# Хеширование и сохранение
         try:
             pwd_hash = hash_streebog(password)
-            save_user(login, pwd_hash, fio, dob)  # Шифрование происходит внутри save_user
-            return {
-                "success": True,
-                "message": "Регистрация успешна",
-                "login": login,
-                "pwd_hash": pwd_hash,
-                "fio": fio,
-                "is_existing": False
-            }
+            save_user(login, pwd_hash, fio, dob)
+            return {"success": True, "message": "Регистрация успешна", "login": login, "pwd_hash": pwd_hash, "fio": fio,
+                    "is_existing": False}
         except Exception as e:
             return {"success": False, "message": f"❌ Ошибка регистрации: {e}"}
