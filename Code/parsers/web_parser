@@ -1,69 +1,33 @@
-# Поиск внешних URL — с повторными попытками
-import time
-import warnings
+# Поиск внешних URL
+import time, warnings
 from urllib.parse import urlparse
 from config import REQUEST_TIMEOUT
 from database.db_ol import init, get_olympiads, update_url
-
 warnings.filterwarnings("ignore", message=".*renamed to ddgs.*")
 
-def _is_valid_external_url(url: str) -> bool:
-    if not url or url in ("Не найдено", "Ошибка поиска"):
-        return False
+def _is_valid(url: str) -> bool:
+    if not url or url in ("Не найдено", "Ошибка поиска"): return False
     domain = urlparse(url).netloc.lower().replace('www.', '')
-    blocked = ['olimpiada.ru', 'vk.com', 'youtube.com', 'rutube.ru', 't.me', 'ok.ru']
-    if any(b in domain for b in blocked):
-        return False
-    if any(x in domain for x in ['wikipedia.org', 'kp.ru', 'ucheba.ru', 'postupi.online']):
-        return False
-    return domain.endswith(('.ru', '.рф', '.edu', '.org'))
+    blocked = ['olimpiada.ru', 'vk.com', 'youtube.com', 'rutube.ru', 't.me', 'wikipedia.org', 'kp.ru', 'ucheba.ru', 'postupi.online']
+    return not any(b in domain for b in blocked)
 
-def _find_first_url(name: str, desc: str, max_retries: int = 3) -> str:
-# Ищет URL с повторными попытками при ошибке DDGS
-    short_desc = desc.split('.')[0].strip()[:40] if '.' in desc else desc[:40]
-    query = f"олимпиада {name} {short_desc} официальный сайт"
-
-    for attempt in range(max_retries):
-        try:
-            from ddgs import DDGS
-            with DDGS() as ddgs:
-                results = list(ddgs.text(query, max_results=5, region='ru-ru'))
-                for r in results:
-                    href = r.get('href', '')
-                    if _is_valid_external_url(href):
-                        return href
-            # Если не нашли валидный — выходим из цикла повторных попыток
-            break
-        except Exception as e:
-            print(f"  ⚠️ Попытка {attempt+1}/{max_retries}: {type(e).__name__}")
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Экспоненциальная задержка: 2с, 4с...
-            continue
-
+def _find_url(name: str, desc: str) -> str:
+    q = f"олимпиада {name} {desc.split('.')[0][:40]} официальный сайт"
+    try:
+        from ddgs import DDGS
+        with DDGS() as ddgs:
+            for r in ddgs.text(q, max_results=5, region='ru-ru'):
+                if _is_valid(r.get('href', '')): return r['href']
+    except: pass
     return "Не найдено"
 
 def find_urls(filter_tag: str) -> list[tuple]:
     init()
-    olympiads = get_olympiads(filter_tag)
-    if not olympiads:
-        return []
-
-    results = []
-    print("🔍 Поиск официальных сайтов...")
-
-    for name, desc, url in olympiads:
-        if url and _is_valid_external_url(url):
-            results.append((name, desc, url))
-            continue
-
-        found = _find_first_url(name, desc)
-
-        if _is_valid_external_url(found):
-            results.append((name, desc, found))
-            update_url(filter_tag, name, found)
-        else:
-            results.append((name, desc, "Не найдено"))
-
-        time.sleep(1.0)  # Задержка между запросами
-
-    return results
+    res = []
+    for name, desc, url in get_olympiads(filter_tag):
+        if url and _is_valid(url): res.append((name, desc, url)); continue
+        found = _find_url(name, desc)
+        res.append((name, desc, found))
+        if _is_valid(found): update_url(filter_tag, name, found)
+        time.sleep(0.8)
+    return res
