@@ -5,7 +5,6 @@ def hash_streebog(password: str) -> str:
 
 # Принимает пароль, возвращает его хеш-строку (hex).
 # Используется алгоритм Стрибог-256.
-
     try:
         h = gostcrypto.gosthash.new('streebog256')
         h.update(password.encode('utf-8'))
