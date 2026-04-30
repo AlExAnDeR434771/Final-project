@@ -1,10 +1,7 @@
 # Окно входа/регистрации (Логика)
 import customtkinter as ctk
-import re
-from datetime import datetime
 from gui.widgets.login_form import LoginForm
-from regist import handle_auth
-from profile import create_profile
+from auth.registry import AuthManager
 
 
 class LoginWindow:
@@ -12,6 +9,7 @@ class LoginWindow:
         self.parent = parent
         self.on_success = on_success
         self.profile_service = profile_service
+        self.auth = AuthManager()
         self.mode = None
 
         self.frame = ctk.CTkFrame(parent, fg_color="#1a3a52")
@@ -24,73 +22,106 @@ class LoginWindow:
         title_frame = ctk.CTkFrame(self.frame, fg_color="transparent")
         title_frame.pack(pady=20)
         ctk.CTkLabel(title_frame, text="🏆 SSOR", font=ctk.CTkFont(size=36, weight="bold"), text_color="#4a9eff").pack()
-        ctk.CTkLabel(title_frame, text="Система поиска олимпиад", font=ctk.CTkFont(size=13), text_color="#7ec8e3").pack()
+        ctk.CTkLabel(title_frame, text="Система поиска олимпиад", font=ctk.CTkFont(size=13),
+                     text_color="#7ec8e3").pack()
 
-        # Кнопки выбора режима
+        # Панель выбора режима
         mode_frame = ctk.CTkFrame(self.frame, fg_color="#0d2137")
         mode_frame.pack(pady=15, padx=30, fill="x")
-        ctk.CTkLabel(mode_frame, text="Выберите действие:", font=ctk.CTkFont(size=14, weight="bold"), text_color="#7ec8e3").pack(pady=5)
+        ctk.CTkLabel(mode_frame, text="Выберите действие:", font=ctk.CTkFont(size=14, weight="bold"),
+                     text_color="#7ec8e3").pack(pady=5)
 
         btn_frame = ctk.CTkFrame(mode_frame, fg_color="transparent")
-        btn_frame.pack(pady=5)
+        btn_frame.pack(pady=10)
 
-        self.btn_login = ctk.CTkButton(btn_frame, text="🔑 ВОЙТИ", command=lambda: self.set_mode("login"), width=160, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#2d6a4f")
+        # Кнопки только переключают режим
+        self.btn_login = ctk.CTkButton(btn_frame, text="🔑 ВОЙТИ", command=lambda: self.set_mode("login"), width=160,
+                                       height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#2d6a4f")
         self.btn_login.pack(side="left", padx=15)
-        self.btn_register = ctk.CTkButton(btn_frame, text="✚ РЕГИСТРАЦИЯ", command=lambda: self.set_mode("register"), width=160, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#1b4332")
+
+        self.btn_register = ctk.CTkButton(btn_frame, text="✚ РЕГИСТРАЦИЯ", command=lambda: self.set_mode("register"),
+                                          width=160, height=40, font=ctk.CTkFont(size=14, weight="bold"),
+                                          fg_color="#1b4332")
         self.btn_register.pack(side="left", padx=15)
 
-        # Форма (виджет)
+        # Форма ввода
         self.form = LoginForm(self.frame)
-        self.form.pack(pady=15, padx=30, fill="x")
+        self.form.pack(pady=20, padx=30, fill="x")
 
-        # Кнопка действия
-        self.action_btn = ctk.CTkButton(self.frame, text="Начните", command=self._on_submit, width=200, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="#2d6a4f")
-        self.action_btn.pack(pady=15)
+        # ✅ Динамическая кнопка действия (вместо удалённой "Начните")
+        self.submit_btn = ctk.CTkButton(
+            self.frame,
+            text="Выберите режим",
+            command=self._on_submit,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            state="disabled",
+            fg_color="#555555"
+        )
+        self.submit_btn.pack(pady=15)
 
     def set_mode(self, mode):
         self.mode = mode
         self.form.set_mode(mode)
-        self.action_btn.configure(text="🔑 ВОЙТИ" if mode == "login" else "✚ ЗАРЕГИСТРИРОВАТЬСЯ")
-        self.btn_login.configure(fg_color="#2d6a4f" if mode == "login" else "#1b4332")
-        self.btn_register.configure(fg_color="#2d6a4f" if mode == "register" else "#1b4332")
+        self._clear_error()
+
+        if mode == "login":
+            self.submit_btn.configure(text="🔑 ВОЙТИ", state="normal", fg_color="#2d6a4f", hover_color="#1b4332")
+            self.btn_login.configure(fg_color="#2d6a4f")
+            self.btn_register.configure(fg_color="#1b4332")
+        else:
+            self.submit_btn.configure(text="✚ ЗАРЕГИСТРИРОВАТЬСЯ", state="normal", fg_color="#1b4332",
+                                      hover_color="#2d6a4f")
+            self.btn_register.configure(fg_color="#2d6a4f")
+            self.btn_login.configure(fg_color="#1b4332")
+
+    def _clear_error(self):
+        if self.error_label and self.error_label.winfo_exists():
+            self.error_label.destroy()
+        self.error_label = None
 
     def _show_error(self, msg):
-        if self.error_label: self.error_label.destroy()
-        self.error_label = ctk.CTkLabel(self.frame, text=msg, text_color="#ffffff", fg_color="#c75b5b")
+        self._clear_error()
+        self.error_label = ctk.CTkLabel(
+            self.frame,
+            text=msg,
+            text_color="#ffffff",
+            fg_color="#c75b5b",
+            font=ctk.CTkFont(size=12),
+            padx=10,
+            pady=5
+        )
         self.error_label.pack(pady=5)
-        self.frame.after(3000, lambda: self.error_label.destroy())
+        self.frame.after(3000, self._clear_error)
 
     def _on_submit(self):
-        if not self.mode: return self._show_error("⚠️ Выберите режим")
+        self._clear_error()
+        if not self.mode:
+            return self._show_error("⚠️ Сначала выберите: Вход или Регистрация")
 
         login = self.form.get_login()
         pwd = self.form.get_password()
         pwd_c = self.form.get_password_confirm()
 
+        # Общие проверки
         if len(login) < 3: return self._show_error("⚠️ Логин: мин. 3 символа")
         if len(pwd) < 6: return self._show_error("⚠️ Пароль: мин. 6 символов")
         if pwd != pwd_c: return self._show_error("⚠️ Пароли не совпадают")
 
         if self.mode == "register":
-            fio, dob = self.form.get_fio(), self.form.get_dob()
-            if len(fio.split()) < 3: return self._show_error("⚠️ ФИО: Фамилия Имя Отчество")
-            if not re.match(r'^\d{2}\.\d{2}\.\d{4}$', dob): return self._show_error("⚠️ Дата: ДД.ММ.ГГГГ")
-
-            try:
-                age = datetime.now().year - datetime.strptime(dob, '%d.%m.%Y').year
-                if not (1 <= age <= 122): return self._show_error("⚠️ Возраст: 1-122 лет")
-            except: return self._show_error("⚠️ Неверная дата")
-
-            res = handle_auth(login, pwd)
+            fio = self.form.get_fio()
+            dob = self.form.get_dob()
+            res = self.auth.register(login, pwd, fio, dob)
             if res["success"]:
-                if create_profile(login, res["pwd_hash"], fio, dob)["success"]:
-                    self._show_error("✅ Регистрация успешна!")
-                    self.frame.after(800, lambda: self.on_success({**res, "fio": fio, "is_existing": False}))
-                else: self._show_error("❌ Ошибка профиля")
-            else: self._show_error(f"❌ {res['message']}")
+                self._show_error("✅ Регистрация успешна!")
+                self.frame.after(800, lambda: self.on_success({**res, "is_existing": False}))
+            else:
+                self._show_error(res["message"])
         else:
-            res = handle_auth(login, pwd)
+            res = self.auth.login(login, pwd)
             if res["success"]:
                 self._show_error("✅ Вход выполнен!")
                 self.frame.after(800, lambda: self.on_success(res))
-            else: self._show_error(f"❌ {res['message']}")
+            else:
+                self._show_error(res["message"])
