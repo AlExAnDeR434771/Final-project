@@ -1,5 +1,7 @@
 # Главный класс приложения
 import customtkinter as ctk
+import tkinter as tk
+import os
 import traceback
 from .windows.login_win import LoginWindow
 from .windows.main_win import MainWindow
@@ -16,113 +18,112 @@ class SSORApp:
             self.current_user = None
             print("✅ SSORApp инициализирован")
             self._show_login()
-            # ✅ Принудительно обновляем окно
             self.root.update()
             self.root.deiconify()
             print("✅ Окно показано")
         except Exception as e:
             print(f"❌ Ошибка в __init__: {e}")
             traceback.print_exc()
-            raise
 
     def _setup_window(self):
         self.root.title("SSOR — Поиск олимпиад")
         self.root.geometry("900x650")
         self.root.minsize(800, 550)
         self.root.configure(fg_color="#1a3a52")
+
+        # Установка иконки
+        self._set_icon()
+
         from .styles.theme import apply_theme
         apply_theme()
-        print("✅ Окно настроено")
+
+    def _set_icon(self):
+        """Установка иконки (приоритет ICO для Windows)"""
+        base_dir = os.path.dirname(__file__)
+        # Ищем icon.ico в корневой папке (на уровень выше gui)
+        ico_path = os.path.abspath(os.path.join(base_dir, '..', 'icon.ico'))
+        png_path = os.path.abspath(os.path.join(base_dir, '..', 'icon.png'))
+
+        # 1. Пробуем ICO (надежно для Windows)
+        if os.path.exists(ico_path):
+            try:
+                self.root.iconbitmap(ico_path)
+                print("✅ ICO иконка установлена")
+                return
+            except Exception as e:
+                print(f"⚠️ Ошибка ICO: {e}")
+
+        # 2. Fallback на PNG
+        if os.path.exists(png_path):
+            try:
+                img = tk.PhotoImage(file=png_path)
+                self.root.iconphoto(True, img)
+                self.root.icon_image = img  # Защита от сборщика мусора
+                print("✅ PNG иконка установлена (может не отобразиться в заголовке)")
+            except Exception as e:
+                print(f"❌ Ошибка PNG: {e}")
+        else:
+            print("⚠️ Файл icon.ico не найден. Иконка не изменится.")
 
     def _show_login(self):
         try:
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'frame'):
+                self.main_window.frame.destroy()
             print("🔐 Показываем окно входа...")
             self.login_window = LoginWindow(
                 parent=self.root,
                 on_success=self._on_auth_success,
                 profile_service=self.profile_service
             )
-            print("✅ Окно входа создано")
             self.root.update()
         except Exception as e:
-            print(f"❌ Ошибка при создании окна входа: {e}")
+            print(f"❌ Ошибка окна входа: {e}")
             traceback.print_exc()
-            raise
 
+    # Исправлено: user_data (без пробела и подчеркивания)
     def _on_auth_success(self, user_data: dict):
         try:
             print(f"🎉 Аутентификация успешна: {user_data.get('login', 'unknown')}")
             self.current_user = user_data
-
             if user_data.get("is_existing"):
                 try:
                     fio = self.profile_service.load_fio(user_data["login"])
                     user_data["fio"] = fio
-                    print(f"👤 Загружено ФИО: {fio}")
-                except Exception as e:
-                    print(f"⚠️ Не удалось загрузить ФИО: {e}")
+                except Exception:
                     user_data["fio"] = user_data.get("login", "Пользователь")
-
             self._show_main_window(user_data)
         except Exception as e:
-            error_msg = f"❌ Ошибка в _on_auth_success: {e}"
-            print(error_msg)
+            print(f"❌ Ошибка в _on_auth_success: {e}")
             traceback.print_exc()
-            self._show_global_error(error_msg)
 
+    # Исправлено: user_data (без пробела и подчеркивания)
     def _show_main_window(self, user_data: dict = None):
         try:
             if user_data is None:
                 user_data = {}
-            print("🗑️ Уничтожаем окно входа...")
             if hasattr(self, 'login_window') and hasattr(self.login_window, 'frame'):
                 self.login_window.frame.destroy()
-                print("✅ Окно входа уничтожено")
-
-            print("📊 Создаём главное окно...")
             self.main_window = MainWindow(
                 parent=self.root,
                 user=user_data,
                 on_logout=self._on_logout
             )
-            print("✅ Главное окно создано")
             self.root.update()
         except Exception as e:
-            error_msg = f"❌ Ошибка при создании главного окна: {e}"
-            print(error_msg)
+            print(f"❌ Ошибка главного окна: {e}")
             traceback.print_exc()
-            self._show_global_error(error_msg)
 
     def _on_logout(self):
         try:
-            print("🚪 Выход из системы...")
+            print("🚪 Выход...")
             self.current_user = None
             if hasattr(self, 'main_window') and hasattr(self.main_window, 'frame'):
                 self.main_window.frame.destroy()
-                print("✅ Главное окно уничтожено")
             self._show_login()
         except Exception as e:
-            error_msg = f"❌ Ошибка при выходе: {e}"
-            print(error_msg)
+            print(f"❌ Ошибка выхода: {e}")
             traceback.print_exc()
-            self._show_global_error(error_msg)
-
-    def _show_global_error(self, message: str):
-        """✅ Показывает ошибку в отдельном окне"""
-        try:
-            if hasattr(self, 'root'):
-                error_window = ctk.CTkToplevel(self.root)
-                error_window.title("❌ Ошибка")
-                error_window.geometry("400x150")
-                ctk.CTkLabel(error_window, text=message, wraplength=380).pack(pady=20, padx=10)
-                ctk.CTkButton(error_window, text="Закрыть", command=error_window.destroy).pack(pady=10)
-        except Exception as e:
-            print(f"❌ Не удалось показать ошибку: {e}")
 
     def run(self):
         print("🚀 Запуск mainloop...")
-        try:
-            self.root.mainloop()
-        except Exception as e:
-            print(f"❌ Ошибка в mainloop: {e}")
-            traceback.print_exc()
+        self.root.mainloop()
