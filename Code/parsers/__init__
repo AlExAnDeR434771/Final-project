@@ -1,4 +1,5 @@
 # Пакет парсеров — экспорт главной функции
 from .parser_main import parse_olympiads
+from .web_parser import find_urls
 
-__all__ = ['parse_olympiads']
+__all__ = ['parse_olympiads', 'find_urls']
