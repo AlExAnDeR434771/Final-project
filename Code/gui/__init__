@@ -1,4 +1,4 @@
-# Пакет диалоговых окон
-from .filter_dialog import FilterDialog
+# Пакет графического интерфейса
+from .app import SSORApp
 
-__all__ = ['FilterDialog']
+__all__ = ['SSORApp']
