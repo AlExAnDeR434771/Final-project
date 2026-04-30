@@ -1,54 +1,10 @@
-# Логика управления профилем
-import re
-from datetime import datetime
-from encrypt import encrypt_kuznyechik
-from database.db_users import UsersDatabase
-
+# Сервис управления профилем пользователя
+from crypto.encrypt import decrypt_kuznyechik
+from database.db_users import get_user_data
 
 class ProfileService:
-    def __init__(self):
-        self.db = UsersDatabase()
-
-    def _validate_fio(self, fio: str) -> tuple[bool, str]:
-        fio = fio.strip()
-        if not re.match(r'^[а-яА-ЯёЁ\-\s]{3,60}$', fio):
-            return False, "ФИО: кириллица, пробелы, дефисы (3-60 символов)"
-        if len(fio.split()) < 2:
-            return False, "ФИО: минимум фамилия и имя"
-        return True, ""
-
-    def _validate_dob(self, dob: str) -> tuple[bool, str]:
-        try:
-            dt = datetime.strptime(dob, '%d.%m.%Y')
-            if dt > datetime.today():
-                return False, "Дата: не в будущем"
-            age = datetime.today().year - dt.year
-            if not (5 <= age <= 100):
-                return False, "Возраст: 5-100 лет"
-            return True, ""
-        except ValueError:
-            return False, "Дата: формат ДД.ММ.ГГГГ"
-
-    def create(self, login: str, pwd_hash: str, fio: str, dob: str) -> dict:
-        valid, msg = self._validate_fio(fio)
-        if not valid:
-            return {"success": False, "message": msg}
-        valid, msg = self._validate_dob(dob)
-        if not valid:
-            return {"success": False, "message": msg}
-
-        try:
-            fio_enc = encrypt_kuznyechik(fio)
-            dob_enc = encrypt_kuznyechik(dob)
-            self.db.save_user(login, pwd_hash, fio_enc, dob_enc)
-            return {"success": True, "message": "Профиль сохранён", "fio": fio}
-        except Exception as e:
-            return {"success": False, "message": f"Ошибка: {e}"}
-
     def load_fio(self, login: str) -> str:
         try:
-            from encrypt import decrypt_kuznyechik
-            fio_enc = self.db.get_user_data(login, "fullname_enc")
+            fio_enc = get_user_data(login, "fullname_enc")
             return decrypt_kuznyechik(fio_enc) if fio_enc else ""
-        except:
-            return ""
+        except: return ""
