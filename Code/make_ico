@@ -1,0 +1,12 @@
+# make_ico.py
+from PIL import Image
+import os
+
+# Проверяем, есть ли исходный файл
+if os.path.exists("icon.png"):
+    img = Image.open("icon.png")
+    # Конвертируем в формат ICO с разными размерами для четкости
+    img.save("icon.ico", format="ICO", sizes=[(32,32), (64,64), (128,128), (256,256)])
+    print("✅ Файл icon.ico успешно создан!")
+else:
+    print("❌ Ошибка: Файл icon.png не найден в папке проекта.")
