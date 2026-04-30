@@ -2,161 +2,102 @@
 import customtkinter as ctk
 
 class FilterDialog:
-# Модальное окно выбора фильтров
-
     def __init__(self, parent):
         self.parent = parent
         self.result = None
-
-        # Создаем дочернее окно (Toplevel)
         self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title("🎛️ Фильтры поиска")
         self.dialog.geometry("450x500")
-        self.dialog.configure(fg_color="#1a3a52")  # Основной фон
-
-        # Делаем окно модальным (блокирует основное)
+        self.dialog.configure(fg_color="#1a3a52")
         self.dialog.transient(parent)
         self.dialog.grab_set()
-
-        # Выравниваем по центру относительно родителя
         self._center_window()
-
         self._create_widgets()
-
-        # Ждем закрытия окна
         self.dialog.wait_window()
 
     def _center_window(self):
-        """Центрирует окно относительно родителя"""
         self.dialog.update_idletasks()
         x = self.parent.winfo_x() + (self.parent.winfo_width() // 2) - (450 // 2)
         y = self.parent.winfo_y() + (self.parent.winfo_height() // 2) - (500 // 2)
         self.dialog.geometry(f"450x500+{x}+{y}")
 
     def _create_widgets(self):
-        # --- Заголовок ---
         header_frame = ctk.CTkFrame(self.dialog, fg_color="#0d2137", corner_radius=10)
         header_frame.pack(fill="x", padx=20, pady=20)
+        ctk.CTkLabel(header_frame, text="🎛️ Настройка фильтров",
+                     font=ctk.CTkFont(size=22, weight="bold"), text_color="#4a9eff").pack(pady=15)
 
-        ctk.CTkLabel(
-            header_frame,
-            text="🎛️ Настройка фильтров",
-            font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#4a9eff"
-        ).pack(pady=15)
-
-        # --- Контент ---
         content_frame = ctk.CTkFrame(self.dialog, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-        # 1. Предмет
-        ctk.CTkLabel(content_frame, text="Предмет:", font=ctk.CTkFont(size=14, weight="bold"), text_color="#7ec8e3").pack(anchor="w", pady=(0, 5))
-        self.combo_subject = ctk.CTkComboBox(
-            content_frame,
-            values=[
-                "Все предметы", "Биология", "География", "Информатика", "Математика",
-                "Физика", "Химия", "Астрономия", "История", "Литература",
-                "Обществознание", "Право", "Робототехника", "Русский язык", "Экономика"
-            ],
-            state="readonly",
-            fg_color="#0d2137",
-            dropdown_fg_color="#0d2137",
-            dropdown_hover_color="#2d6a4f",
-            button_color="#4a9eff",
-            button_hover_color="#7ec8e3",
-            text_color="#ffffff",
-            font=ctk.CTkFont(size=13)
-        )
-        self.combo_subject.set("Все предметы")
-        self.combo_subject.pack(fill="x", pady=5)
+        ctk.CTkLabel(content_frame, text="Предмет:", font=ctk.CTkFont(size=14,
+                                                                      weight="bold"),
+                     text_color="#7ec8e3").pack(anchor="w", pady=(0, 5))
+        self.combo_subject = ctk.CTkComboBox(content_frame, values=["Все предметы",
+                                                                    "Биология", "География",
+                                                                    "Информатика", "Математика",
+                                                                    "Физика", "Химия", "Астрономия",
+                                                                    "История", "Литература",
+                                                                    "Обществознание", "Право",
+                                                                    "Робототехника", "Русский язык",
+                                                                    "Экономика"], state="readonly",
+                                             fg_color="#0d2137", dropdown_fg_color="#0d2137",
+                                             dropdown_hover_color="#2d6a4f", button_color="#4a9eff",
+                                             button_hover_color="#7ec8e3", text_color="#ffffff",
+                                             font=ctk.CTkFont(size=13))
+        self.combo_subject.set("Все предметы"); self.combo_subject.pack(fill="x", pady=5)
 
-        # 2. Класс
-        ctk.CTkLabel(content_frame, text="Класс:", font=ctk.CTkFont(size=14, weight="bold"), text_color="#7ec8e3").pack(anchor="w", pady=(15, 5))
-        grades = ["Любой"] + [str(i) for i in range(1, 12)]
-        self.combo_grade = ctk.CTkComboBox(
-            content_frame,
-            values=grades,
-            state="readonly",
-            fg_color="#0d2137",
-            dropdown_fg_color="#0d2137",
-            dropdown_hover_color="#2d6a4f",
-            button_color="#4a9eff",
-            button_hover_color="#7ec8e3",
-            text_color="#ffffff",
-            font=ctk.CTkFont(size=13)
-        )
-        self.combo_grade.set("Любой")
-        self.combo_grade.pack(fill="x", pady=5)
+        ctk.CTkLabel(content_frame, text="Класс:", font=ctk.CTkFont(size=14, weight="bold"),
+                     text_color="#7ec8e3").pack(anchor="w", pady=(15, 5))
+        self.combo_grade = ctk.CTkComboBox(content_frame,
+                                           values=["Любой"] + [str(i) for i in range(1, 12)],
+                                           state="readonly", fg_color="#0d2137",
+                                           dropdown_fg_color="#0d2137",
+                                           dropdown_hover_color="#2d6a4f",
+                                           button_color="#4a9eff",
+                                           button_hover_color="#7ec8e3",
+                                           text_color="#ffffff", font=ctk.CTkFont(size=13))
+        self.combo_grade.set("Любой"); self.combo_grade.pack(fill="x", pady=5)
 
-        # 3. Формат
-        ctk.CTkLabel(content_frame, text="Формат:", font=ctk.CTkFont(size=14, weight="bold"), text_color="#7ec8e3").pack(anchor="w", pady=(15, 5))
-        self.combo_format = ctk.CTkComboBox(
-            content_frame,
-            values=["Все", "Командные", "Личные", "Дистанционные"],
-            state="readonly",
-            fg_color="#0d2137",
-            dropdown_fg_color="#0d2137",
-            dropdown_hover_color="#2d6a4f",
-            button_color="#4a9eff",
-            button_hover_color="#7ec8e3",
-            text_color="#ffffff",
-            font=ctk.CTkFont(size=13)
-        )
-        self.combo_format.set("Все")
-        self.combo_format.pack(fill="x", pady=5)
+        ctk.CTkLabel(content_frame, text="Формат:", font=ctk.CTkFont(size=14, weight="bold"),
+                     text_color="#7ec8e3").pack(anchor="w", pady=(15, 5))
+        self.combo_format = ctk.CTkComboBox(content_frame, values=["Все", "Командные",
+                                                                   "Личные", "Дистанционные"],
+                                            state="readonly", fg_color="#0d2137",
+                                            dropdown_fg_color="#0d2137",
+                                            dropdown_hover_color="#2d6a4f",
+                                            button_color="#4a9eff",
+                                            button_hover_color="#7ec8e3",
+                                            text_color="#ffffff", font=ctk.CTkFont(size=13))
+        self.combo_format.set("Все"); self.combo_format.pack(fill="x", pady=5)
 
-        # 4. Календарь (Упрощено для красоты)
-        ctk.CTkLabel(content_frame, text="Календарь:", font=ctk.CTkFont(size=14, weight="bold"), text_color="#7ec8e3").pack(anchor="w", pady=(15, 5))
-        self.combo_calendar = ctk.CTkComboBox(
-            content_frame,
-            values=["Когда угодно", "Сейчас", "В конкретный день"],
-            state="readonly",
-            fg_color="#0d2137",
-            dropdown_fg_color="#0d2137",
-            dropdown_hover_color="#2d6a4f",
-            button_color="#4a9eff",
-            button_hover_color="#7ec8e3",
-            text_color="#ffffff",
-            font=ctk.CTkFont(size=13)
-        )
-        self.combo_calendar.set("Когда угодно")
-        self.combo_calendar.pack(fill="x", pady=5)
+        ctk.CTkLabel(content_frame, text="Календарь:", font=ctk.CTkFont(size=14, weight="bold"),
+                     text_color="#7ec8e3").pack(anchor="w", pady=(15, 5))
+        self.combo_calendar = ctk.CTkComboBox(content_frame, values=["Когда угодно",
+                                                                     "Сейчас", "В конкретный день"],
+                                              state="readonly", fg_color="#0d2137",
+                                              dropdown_fg_color="#0d2137",
+                                              dropdown_hover_color="#2d6a4f",
+                                              button_color="#4a9eff",
+                                              button_hover_color="#7ec8e3",
+                                              text_color="#ffffff", font=ctk.CTkFont(size=13))
+        self.combo_calendar.set("Когда угодно"); self.combo_calendar.pack(fill="x", pady=5)
 
-        # 5. Выездные школы (Чекбокс)
         self.var_residential = ctk.BooleanVar(value=False)
-        ctk.CTkCheckBox(
-            content_frame,
-            text="🚌 Только выездные школы",
-            variable=self.var_residential,
-            font=ctk.CTkFont(size=14),
-            text_color="#7ec8e3",
-            fg_color="#2d6a4f",
-            hover_color="#1b4332",
-            border_color="#4a9eff",
-            checkbox_height=20,
-            checkbox_width=20
-        ).pack(anchor="w", pady=20)
+        ctk.CTkCheckBox(content_frame, text="🚌 Только выездные школы",
+                        variable=self.var_residential, font=ctk.CTkFont(size=14),
+                        text_color="#7ec8e3", fg_color="#2d6a4f",
+                        hover_color="#1b4332", border_color="#4a9eff",
+                        checkbox_height=20, checkbox_width=20).pack(anchor="w", pady=20)
 
-        # 6. Кнопка "Применить"
-        btn_apply = ctk.CTkButton(
-            self.dialog,
-            text="✅ Применить фильтры",
-            command=self._on_apply,
-            width=200,
-            height=40,
-            font=ctk.CTkFont(size=16, weight="bold"),
-            fg_color="#2d6a4f",
-            hover_color="#1b4332"
-        )
-        btn_apply.pack(pady=20)
+        ctk.CTkButton(self.dialog, text="✅ Применить фильтры",
+                      command=self._on_apply, width=200, height=40,
+                      font=ctk.CTkFont(size=16, weight="bold"),
+                      fg_color="#2d6a4f", hover_color="#1b4332").pack(pady=20)
 
     def _on_apply(self):
-        """Сбор данных и закрытие окна"""
-        self.result = {
-            "subject": self.combo_subject.get(),
-            "grade": self.combo_grade.get(),
-            "format": self.combo_format.get(),
-            "calendar": self.combo_calendar.get(),
-            "residential": self.var_residential.get()
-        }
+        self.result = {"subject": self.combo_subject.get(),
+                       "grade": self.combo_grade.get(),
+                       "format": self.combo_format.get(),
+                       "calendar": self.combo_calendar.get(), "residential": self.var_residential.get()}
         self.dialog.destroy()
