@@ -1,0 +1,124 @@
+"""Виджет календаря для выбора даты"""
+import customtkinter as ctk
+from tkinter import calendar
+import datetime
+
+class CalendarWidget(ctk.CTkFrame):
+    def __init__(self, parent, on_date_select=None):
+        super().__init__(parent)
+        self.on_date_select = on_date_select
+        self.selected_date = None
+        self.current_year = datetime.datetime.now().year
+        self.current_month = datetime.datetime.now().month
+        self._create_widgets()
+        self._show_month()
+
+    def _create_widgets(self):
+        # Заголовок с годом и месяцем
+        self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.header_frame.pack(fill="x", padx=5, pady=5)
+
+        self.prev_btn = ctk.CTkButton(
+            self.header_frame, text="◀", width=40,
+            command=self._prev_month,
+            fg_color="#2d6a4f", hover_color="#1b4332"
+        )
+        self.prev_btn.pack(side="left", padx=5)
+
+        self.month_label = ctk.CTkLabel(
+            self.header_frame, text="",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        self.month_label.pack(side="left", expand=True)
+
+        self.next_btn = ctk.CTkButton(
+            self.header_frame, text="▶", width=40,
+            command=self._next_month,
+            fg_color="#2d6a4f", hover_color="#1b4332"
+        )
+        self.next_btn.pack(side="right", padx=5)
+
+        # Дни недели
+        self.days_header = ctk.CTkFrame(self, fg_color="transparent")
+        self.days_header.pack(fill="x", padx=5, pady=2)
+
+        days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+        for day in days:
+            lbl = ctk.CTkLabel(
+                self.days_header, text=day, width=40,
+                font=ctk.CTkFont(weight="bold"),
+                text_color="#7ec8e3"
+            )
+            lbl.pack(side="left", padx=2)
+
+        # Сетка дней
+        self.days_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.days_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        self.day_buttons = []
+        for i in range(6):  # 6 недель максимум
+            row = []
+            for j in range(7):  # 7 дней
+                btn = ctk.CTkButton(
+                    self.days_frame, text="", width=40, height=35,
+                    command=lambda r=i, c=j: self._select_day(r, c),
+                    fg_color="transparent", border_width=1,
+                    border_color="#0d2137",
+                    hover_color="#1a3a52"
+                )
+                btn.grid(row=i, column=j, padx=2, pady=2)
+                row.append(btn)
+            self.day_buttons.append(row)
+
+    def _show_month(self):
+        month_names = [
+            "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+            "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+        ]
+        self.month_label.configure(text=f"{month_names[self.current_month-1]} {self.current_year}")
+
+        # Получаем календарь на месяц
+        cal = calendar.monthcalendar(self.current_year, self.current_month)
+
+        # Очищаем все кнопки
+        for i, row in enumerate(self.day_buttons):
+            for j, btn in enumerate(row):
+                if i < len(cal) and j < len(cal[i]):
+                    day = cal[i][j]
+                    if day == 0:
+                        btn.configure(text="", state="disabled", fg_color="transparent")
+                    else:
+                        btn.configure(text=str(day), state="normal", fg_color="#0d2137")
+                else:
+                    btn.configure(text="", state="disabled", fg_color="transparent")
+
+    def _prev_month(self):
+        self.current_month -= 1
+        if self.current_month < 1:
+            self.current_month = 12
+            self.current_year -= 1
+        self._show_month()
+
+    def _next_month(self):
+        self.current_month += 1
+        if self.current_month > 12:
+            self.current_month = 1
+            self.current_year += 1
+        self._show_month()
+
+    def _select_day(self, row, col):
+        btn = self.day_buttons[row][col]
+        if btn.cget("text") and btn.cget("state") == "normal":
+            # Сбрасываем выделение со всех кнопок
+            for r in self.day_buttons:
+                for b in r:
+                    if b.cget("text") and b.cget("state") == "normal":
+                        b.configure(fg_color="#0d2137")
+
+            # Выделяем выбранную дату
+            day = int(btn.cget("text"))
+            btn.configure(fg_color="#2d6a4f")
+            self.selected_date = f"{day:02d}.{self.current_month:02d}.{self.current_year}"
+
+            if self.on_date_select:
+                self.on_date_select(self.selected_date)
