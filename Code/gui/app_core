@@ -1,0 +1,63 @@
+"""Главный контроллер приложения"""
+import customtkinter as ctk
+import tkinter as tk
+from pathlib import Path
+
+# ✅ Исправлен импорт: добавлены MIN_WIDTH, MIN_HEIGHT и правильный путь к theme.py
+from config import ROOT_DIR, APP_TITLE, APP_WIDTH, APP_HEIGHT, MIN_WIDTH, MIN_HEIGHT, COLORS
+from gui.theme import apply_theme
+from gui.windows.login_win import LoginWindow
+from gui.windows.main_win import MainWindow
+from auth.auth_handler import AuthHandler
+
+class SSORApp:
+    def __init__(self):
+        self.root = ctk.CTk()
+        self.auth = AuthHandler()
+        self.current_user = None
+        self._init_window()
+        self._show_login()
+
+    def _init_window(self):
+        self.root.title(APP_TITLE)
+        self.root.geometry(f"{APP_WIDTH}x{APP_HEIGHT}")
+
+        # ✅ Теперь эти переменные доступны
+        self.root.minsize(MIN_WIDTH, MIN_HEIGHT)
+
+        self.root.configure(fg_color=COLORS["bg"])
+        self._load_icon()
+        apply_theme()
+
+    def _load_icon(self):
+        ico = ROOT_DIR / "icon.ico"
+        if ico.exists():
+            try:
+                self.root.iconbitmap(default=str(ico))
+                print("✅ Иконка установлена для всех окон")
+            except Exception as e:
+                print(f"⚠️ Иконка: {e}")
+
+    def _clear_ui(self):
+        for w in self.root.winfo_children():
+            w.destroy()
+
+    def _show_login(self):
+        self._clear_ui()
+        LoginWindow(self.root, self._on_auth, self.auth)
+
+    def _show_main(self, user):
+        self._clear_ui()
+        self.current_user = user
+        MainWindow(self.root, user, self._on_logout)
+
+    def _on_auth(self, res):
+        if res["success"]:
+            self._show_main(res)
+
+    def _on_logout(self):
+        self.current_user = None
+        self._show_login()
+
+    def run(self):
+        self.root.mainloop()
