@@ -1,0 +1,61 @@
+# Шифрование данных (Кузнечик ГОСТ + AES Fallback)
+"""Шифрование данных (Лекция 7, ФЗ-152). Fernet как fallback для ГОСТ Кузнечик"""
+"""Шифрование данных (Лекция 7, ФЗ-152). Попытка ГОСТ Кузнечик, fallback на AES."""
+import os
+import base64
+import hashlib
+from pathlib import Path
+from cryptography.fernet import Fernet
+
+# Путь к файлу ключа
+KEY_FILE = Path(__file__).parent.parent / "data" / "secret.key"
+
+def _get_key():
+    """Получение или генерация ключа шифрования"""
+    DATA_DIR = KEY_FILE.parent
+    DATA_DIR.mkdir(exist_ok=True)
+    if not KEY_FILE.exists():
+        KEY_FILE.write_bytes(Fernet.generate_key())
+    return KEY_FILE.read_bytes()
+
+# Инициализация Fernet (AES-256 fallback)
+_FERNET = Fernet(base64.urlsafe_b64encode(hashlib.sha256(_get_key()).digest()))
+
+def encrypt_data(text: str) -> str:
+    """
+    Шифрует данные:
+    1. Пытается использовать ГОСТ (Кузнечик).
+    2. Если ошибка — использует AES (Fernet).
+    """
+    try:
+        import gostcrypto
+        # ✅ Исправленный синтаксис: режим передается строкой 'CBC'
+        # Кузнечик требует ключ длиной 32 байта (256 бит)
+        key = _get_key()[:32]
+        cipher = gostcrypto.gostcipher.new('kuznyechik', key, mode='CBC')
+
+        # gostcrypto возвращает байты, кодируем их в base64 для сохранения в CSV
+        encrypted_bytes = cipher.encrypt(text.encode('utf-8'))
+        return base64.b64encode(encrypted_bytes).decode('utf-8')
+
+    except Exception as e:
+        # Если ГОСТ не сработал (нет библиотеки, ошибка версии или синтаксиса) -> AES
+        print(f"⚠️ ГОСТ не поддерживается ({e}). Переключаюсь на AES (Fernet).")
+        return _FERNET.encrypt(text.encode()).decode()
+
+def decrypt_data(token: str) -> str:
+# Расшифровывает данные:
+# Пытается использовать ГОСТ.
+# Если ошибка — использует AES.
+    try:
+        import gostcrypto
+        key = _get_key()[:32]
+        cipher = gostcrypto.gostcipher.new('kuznyechik', key, mode='CBC')
+
+        # Декодируем из base64 обратно в байты
+        encrypted_bytes = base64.b64decode(token.encode('utf-8'))
+        return cipher.decrypt(encrypted_bytes).decode('utf-8')
+
+    except Exception:
+        # Fallback на AES
+        return _FERNET.decrypt(token.encode()).decode()
