@@ -1,20 +1,20 @@
-# Построение URL для запросов к olimpiada.ru
+"""Генерация URL запросов (очистка от эмодзи)"""
+"""Генерация URL запросов"""
 from urllib.parse import urlencode
-from config import OLIMPIADA_ACTIVITIES
+from config import OLIMPIADA_URL
 
-def build_activities_url(filter_dict: dict) -> str:
+
+def build_url(filters: dict) -> str:
+    base = OLIMPIADA_URL
     params = {}
-    subj = filter_dict.get("subject", "Все предметы")
-    if subj != "Все предметы": params["subject"] = subj.lower()
-    grade = filter_dict.get("grade", "Любой")
-    if grade != "Любой": params["grade"] = grade
-    fmt = filter_dict.get("format", "Все")
-    if fmt == "Командные": params["team"] = "1"
-    elif fmt == "Личные": params["individual"] = "1"
-    elif fmt == "Дистанционные": params["online"] = "1"
-    if filter_dict.get("residential"): params["residential"] = "1"
-    if filter_dict.get("calendar") == "Сейчас": params["active"] = "1"
+
+    subject = filters.get("subject", "Все предметы")
+    if subject and subject != "все предметы":
+        # ✅ Используем уже очищенный subject
+        params["subject"] = subject
+
+    if filters.get("residential"):
+        params["residential"] = "1"
+
     query = urlencode(params, encoding='utf-8')
-    url = f"{OLIMPIADA_ACTIVITIES}?{query}" if query else OLIMPIADA_ACTIVITIES
-    print(f"🔗 Запрос: {url}")
-    return url
+    return f"{base}?{query}" if query else base
