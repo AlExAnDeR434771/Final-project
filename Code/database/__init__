@@ -1,11 +1,3 @@
 # Пакет работы с данными (экспорт классов и функций)
-from .db_users import (init as init_users, user_exists, save_user, get_stored_hash, get_user_data,
-                       UsersDatabase)
-from .db_ol import init as init_ol, save_olympiads, get_olympiads, update_url, OlympiadsDatabase
-
-__all__ = ['UsersDatabase', 'OlympiadsDatabase', 'init_users', 'init_ol', 'user_exists',
-           'save_user', 'get_stored_hash', 'get_user_data', 'save_olympiads', 'get_olympiads', 'update_url']
-
-def init():
-    init_users()
-    init_ol()
+from .users_db import register_user, authenticate_user
+from .olymp_db import OlympiadsDatabase
