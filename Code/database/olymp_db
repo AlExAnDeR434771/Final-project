@@ -1,0 +1,75 @@
+"""Модуль работы с базой олимпиад (кэш результатов поиска)"""
+import csv
+import json
+from pathlib import Path
+
+class OlympiadsDatabase:
+    """Класс для управления кэшем олимпиад в формате CSV"""
+
+    def __init__(self):
+        # Путь к файлу базы данных (data/olympiads.csv)
+        self.data_dir = Path(__file__).parent.parent / "data"
+        self.db_path = self.data_dir / "olympiads.csv"
+
+        # Создаем папку data, если её нет
+        self.data_dir.mkdir(exist_ok=True)
+
+        # Инициализируем файл, если он не существует
+        if not self.db_path.exists():
+            self._create_db()
+
+    def _create_db(self):
+        """Создает пустой CSV файл с заголовками"""
+        with open(self.db_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(["filter_tag", "results"])
+
+    def save(self, filter_tag: str, results: list):
+        """
+        Сохраняет результаты поиска для конкретного тега фильтра.
+        Если тег уже есть — обновляет запись.
+        """
+        lines = []
+        header = ["filter_tag", "results"]
+
+        # Читаем существующие данные, исключая старый вариант этого тега
+        if self.db_path.exists():
+            with open(self.db_path, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                next(reader, None)  # Пропускаем заголовок
+                for row in reader:
+                    if row and row[0] != filter_tag:
+                        lines.append(row)
+
+        # Добавляем новую запись (сериализуем список в JSON строку)
+        json_data = json.dumps(results, ensure_ascii=False)
+        lines.append([filter_tag, json_data])
+
+        # Перезаписываем файл полностью
+        with open(self.db_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(lines)
+
+    def get(self, filter_tag: str) -> list:
+        """
+        Получает результаты поиска по тегу фильтра.
+        Возвращает пустой список, если ничего не найдено.
+        """
+        if not self.db_path.exists():
+            return []
+
+        with open(self.db_path, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            next(reader, None)  # Пропускаем заголовок
+            for row in reader:
+                if row and row[0] == filter_tag:
+                    try:
+                        # Десериализуем JSON строку обратно в список
+                        return json.loads(row[1])
+                    except json.JSONDecodeError:
+                        return []
+        return []
+
+def update_url(filter_tag: str, name: str, url: str):
+    _get_db().update_url(filter_tag, name, url)
