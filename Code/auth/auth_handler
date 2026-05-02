@@ -1,0 +1,31 @@
+# Валидация и политика безопасности
+import re, csv
+from database.users_db import authenticate_user, register_user
+
+class AuthHandler:
+    def validate(self, login: str, pwd: str, fio: str = "", dob: str = "", agreement: bool = True):
+        if not re.match(r"^[a-zA-Zа-яА-ЯёЁ0-9_]{3,20}$", login):
+            return False, "Логин: 3-20 символов, буквы/цифры/_"
+        if len(pwd) < 8 or not re.search(r"[A-ZА-Я]", pwd) or not re.search(r"\d", pwd):
+            return False, "Пароль: ≥8 символов, заглавная + цифра"
+        if fio and len(fio.split()) < 3:
+            return False, "ФИО: Фамилия Имя Отчество"
+        if not agreement:
+            return False, "Требуется согласие на обработку ПДн (152-ФЗ)"
+        return True, ""
+
+    def login(self, login: str, pwd: str) -> dict:
+        ok, msg = self.validate(login, pwd)
+        return {"success": False, "message": msg} if not ok else authenticate_user(login, pwd)
+
+    def register(self, login: str, pwd: str, confirm: str, fio: str, dob: str, agreement: bool) -> dict:
+        if pwd != confirm: return {"success": False, "message": "Пароли не совпадают"}
+        ok, msg = self.validate(login, pwd, fio, dob, agreement)
+        if not ok: return {"success": False, "message": msg}
+        try:
+            with open("data/users.csv", "r", encoding="utf-8") as f:
+                if any(row["login"] == login for row in csv.DictReader(f)):
+                    return {"success": False, "message": "Логин уже занят"}
+        except FileNotFoundError: pass
+        register_user(login, pwd, fio, dob, agreement)
+        return {"success": True, "login": login, "fio": fio}
