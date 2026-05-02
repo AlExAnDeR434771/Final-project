@@ -1,0 +1,71 @@
+"""Форма ввода с подтверждением пароля и согласием 152-ФЗ"""
+import customtkinter as ctk
+
+class AuthForm(ctk.CTkFrame):
+    def __init__(self, master, mode="login"):
+        super().__init__(master, fg_color="transparent")
+        self.mode = mode  # ✅ Строго по умолчанию: вход
+        self._create_widgets()
+        self._pack_all()
+
+    def _create_widgets(self):
+        # Логин
+        self.login_entry = ctk.CTkEntry(self, placeholder_text="Логин", width=380, height=40, font=ctk.CTkFont(size=14))
+
+        # Пароль + Кнопка "глаз"
+        self.pwd_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.pwd_entry = ctk.CTkEntry(self.pwd_frame, placeholder_text="Пароль", show="*", width=360, height=40, font=ctk.CTkFont(size=14))
+        self.pwd_entry.pack(side="left", fill="x", expand=True)
+        self.pwd_toggle = ctk.CTkButton(self.pwd_frame, text="👁️", width=45, height=40, command=self._toggle_pwd, fg_color="transparent", font=ctk.CTkFont(size=16))
+        self.pwd_toggle.pack(side="right", padx=5)
+
+        # Подтверждение пароля
+        self.confirm_entry = ctk.CTkEntry(self, placeholder_text="Повторите пароль", show="*", width=380, height=40, font=ctk.CTkFont(size=14))
+
+        # ФИО и Дата
+        self.fio_entry = ctk.CTkEntry(self, placeholder_text="ФИО (Фамилия Имя Отчество)", width=380, height=40, font=ctk.CTkFont(size=14))
+        self.dob_entry = ctk.CTkEntry(self, placeholder_text="Дата рождения (ДД.ММ.ГГГГ)", width=380, height=40, font=ctk.CTkFont(size=14))
+
+        # Согласие 152-ФЗ
+        self.agreement_var = ctk.BooleanVar(value=False)
+        self.agreement_check = ctk.CTkCheckBox(self, text="✓ Даю согласие на обработку персональных данных", variable=self.agreement_var, font=ctk.CTkFont(size=12))
+
+    def _pack_all(self):
+        self.login_entry.pack(fill="x", pady=8)
+        self.pwd_frame.pack(fill="x", pady=8)
+        self.toggle()  # ✅ Применяем начальное состояние
+
+    def _toggle_pwd(self):
+        """Синхронно скрывает/показывает оба поля пароля"""
+        is_hidden = self.pwd_entry.cget("show") == "*"
+        show_char = "" if is_hidden else "*"
+        icon = "🙈" if is_hidden else "👁️"
+
+        self.pwd_entry.configure(show=show_char)
+        self.confirm_entry.configure(show=show_char)
+        self.pwd_toggle.configure(text=icon)
+
+    def toggle(self):
+        """✅ Исправлена логика переключения режимов"""
+        self.mode = "register" if self.mode == "login" else "login"
+        is_reg = (self.mode == "register")
+
+        # Показываем/скрываем поля регистрации
+        for w in [self.confirm_entry, self.fio_entry, self.dob_entry, self.agreement_check]:
+            w.pack(fill="x", pady=8) if is_reg else w.pack_forget()
+
+        # Сброс состояния при переключении
+        self.pwd_entry.configure(show="*")
+        self.confirm_entry.configure(show="*")
+        self.pwd_toggle.configure(text="👁️")
+        self.agreement_var.set(False)
+
+    def get_data(self):
+        return {
+            "login": self.login_entry.get(),
+            "password": self.pwd_entry.get(),
+            "confirm": self.confirm_entry.get() if self.mode == "register" else "",
+            "fio": self.fio_entry.get() if self.mode == "register" else "",
+            "dob": self.dob_entry.get() if self.mode == "register" else "",
+            "agreement": self.agreement_var.get() if self.mode == "register" else True
+        }
