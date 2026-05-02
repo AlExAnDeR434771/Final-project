@@ -12,3 +12,80 @@ def hash_streebog(password: str) -> str:
     except Exception as e:
         print(f"❌ Ошибка хеширования: {e}")
         raise
+
+
+import hashlib
+import os
+import binascii
+
+# Пытаемся подключить библиотеку gostcrypto
+try:
+    import gostcrypto
+    GOST_AVAILABLE = True
+except ImportError:
+    GOST_AVAILABLE = False
+    print("⚠️ Библиотека 'gostcrypto' не установлена. Будет использоваться fallback.")
+
+def hash_password(password: str, salt: bytes = None) -> str:
+    """
+    Хеширование пароля: Приоритет ГОСТ Р 34.11-2012 -> Fallback на SHA-512.
+    """
+    if salt is None:
+        salt = os.urandom(16)
+
+    h = None
+    data = password.encode() + salt
+
+    # 1. Попытка через стандартный hashlib (требует поддержки в OpenSSL)
+    try:
+        h = hashlib.new('streebog512', data)
+    except ValueError:
+        pass  # hashlib не поддерживает ГОСТ
+
+    # 2. Попытка через gostcrypto (если hashlib не сработал)
+    if h is None and GOST_AVAILABLE:
+        try:
+            # gostcrypto.new().update().hexdigest() - стандартный способ
+            h = gostcrypto.gosthash3411_512.new(data)
+        except Exception:
+            pass
+
+    # 3. Финальный fallback на SHA-512
+    if h is None:
+        print("⚠️ ГОСТ не поддерживается. Используем SHA-512.")
+        h = hashlib.new('sha512', data)
+
+    return f"{binascii.hexlify(salt).decode()}:{h.hexdigest()}"
+
+def verify_password(stored: str, password: str) -> bool:
+    """
+    Проверка пароля с поддержкой обоих алгоритмов (для совместимости).
+    """
+    try:
+        salt_hex, stored_hash = stored.split(":")
+        salt = binascii.unhexlify(salt_hex)
+        data = password.encode() + salt
+
+        # Сначала пробуем ГОСТ через hashlib
+        try:
+            h = hashlib.new('streebog512', data)
+            if h.hexdigest() == stored_hash:
+                return True
+        except ValueError:
+            pass
+
+        # Затем пробуем ГОСТ через gostcrypto
+        if GOST_AVAILABLE:
+            try:
+                h = gostcrypto.gosthash3411_512.new(data)
+                if h.hexdigest() == stored_hash:
+                    return True
+            except Exception:
+                pass
+
+        # Если ГОСТ не подошел, пробуем SHA-512
+        h = hashlib.new('sha512', data)
+        return h.hexdigest() == stored_hash
+
+    except Exception:
+        return False
