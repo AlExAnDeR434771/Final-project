@@ -1,22 +1,17 @@
-# Панель управления поиском
+"""Панель управления поиском"""
 import customtkinter as ctk
 
 class SearchPanel(ctk.CTkFrame):
-    def __init__(self, master, on_filters, on_search):
-        super().__init__(master, height=60, fg_color="#1a3a52")
+    def __init__(self, master, on_filter, on_search):
+        super().__init__(master, fg_color="transparent", height=90)
         self.pack_propagate(False)
-        self.btn_filters = ctk.CTkButton(self, text="🎛️ Фильтры",
-                                         command=on_filters,
-                                         width=140,
-                                         height=35,
-                                         fg_color="#2d6a4f")
-        self.btn_filters.pack(side="left", padx=20)
-        self.btn_search = ctk.CTkButton(self, text="▶️ Поиск",
-                                        command=on_search,
-                                        width=120, height=35,
-                                        fg_color="#1b4332")
-        self.btn_search.pack(side="left", padx=10)
-        self.label_info = ctk.CTkLabel(self, text="Фильтр: не выбран", text_color="#7ec8e3")
-        self.label_info.pack(side="left", padx=20)
+        ctk.CTkButton(self, text="🎛️ Фильтры", command=on_filter, width=150, height=40, fg_color="#2d6a4f", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left", padx=15)
+        ctk.CTkButton(self, text="▶️ Поиск", command=on_search, width=130, height=40, fg_color="#1b4332", font=ctk.CTkFont(size=13, weight="bold")).pack(side="left", padx=15)
+        self.lbl = ctk.CTkLabel(self, text="Фильтр: не выбран", text_color="#7ec8e3", wraplength=700, font=ctk.CTkFont(size=13), justify="left")
+        self.lbl.pack(side="left", padx=20, fill="x", expand=True)
 
-    def update_filter_label(self, text):
+    def update_label(self, f):
+        parts = [f.get("subject","Все"), f.get("grade","Любой")+" кл."]
+        if f.get("format") != "Все": parts.append(f["format"])
+        if f.get("residential"): parts.append("Выездные")
+        self.lbl.configure(text=" | ".join(parts))
