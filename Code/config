@@ -1,11 +1,22 @@
-# Глобальные настройки проекта
-OLIMPIADA_BASE = "https://olimpiada.ru"
-OLIMPIADA_ACTIVITIES = "https://olimpiada.ru/activities"
+"""Глобальные настройки и пути (Обновленный)"""
+from pathlib import Path
 
-# Ключи ГОСТ (32 байта ключ, 16 байт IV)
-KUZNECHIK_KEY = b"SecureKeyForKuznyechikAlgo32!!"
-KUZNECHIK_IV = b"InitVector123456"
+ROOT_DIR = Path(__file__).parent
+DATA_DIR = ROOT_DIR / "data"
+DB_USERS = DATA_DIR / "users.csv"
+DB_OLYMP = DATA_DIR / "olympiads.csv"
+KEY_FILE = DATA_DIR / "secret.key"
 
-# Настройки
-REQUEST_TIMEOUT = 15
-MAX_OLYMPIADS = 1000
+# ✅ ДОБАВЛЕНЫ НАСТРОЙКИ ПАРСЕРА
+OLIMPIADA_URL = "https://olimpiada.ru/activities"
+REQUEST_TIMEOUT = 10  # Секунд ожидания ответа сервера
+MAX_OLYMPIADS = 1000    # Лимит записей для вывода
+
+APP_TITLE = "SSOR — Поиск олимпиад"
+APP_WIDTH, APP_HEIGHT = 1100, 750
+MIN_WIDTH, MIN_HEIGHT = 900, 600
+
+COLORS = {
+    "bg": "#1a3a52", "bg_sec": "#0d2137", "accent": "#4a9eff",
+    "success": "#2d6a4f", "error": "#c75b5b", "text": "#7ec8e3"
+}
