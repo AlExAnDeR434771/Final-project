@@ -1,0 +1,71 @@
+"""Фильтр предмета"""
+import customtkinter as ctk
+
+SUBJECTS = [
+    "Все предметы",
+    "🔭 Астрономия",
+    "🧬 Биология",
+    "🌍 География",
+    "🎨 ИЗО",
+    "💻 Информатика",
+    "🎭 Искусство",
+    "📜 История",
+    "🌐 Лингвистика",
+    "📚 Литература",
+    "🔬 ОБЗР",
+    "👥 Обществознание",
+    "💼 Предпринимательство",
+    "⚖️ Право",
+    "🧠 Психология",
+    "🤖 Робототехника",
+    "📝 Русский язык",
+    "⚙️ Технология",
+    "⚛️ Физика",
+    "🏃 Физкультура",
+    "⚗️ Химия",
+    "📐 Черчение",
+    "🌱 Экология",
+    "💰 Экономика",
+    "🌎 Ин. языки"
+]
+
+
+class SubjectFilter(ctk.CTkFrame):
+    def __init__(self, parent):
+        super().__init__(parent, fg_color="transparent")
+
+        self.value = "Все предметы"
+
+        # Заголовок
+        self.label = ctk.CTkLabel(
+            self,
+            text="📚 Предмет:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color="#4a9eff"
+        )
+        self.label.pack(anchor="w", pady=(0, 8))
+
+        # Выпадающий список
+        self.combo = ctk.CTkComboBox(
+            self,
+            values=SUBJECTS,
+            state="readonly",
+            height=38,
+            font=ctk.CTkFont(size=12),
+            fg_color="#0d2137",
+            border_color="#1a3a52",
+            button_color="#2d6a4f",
+            button_hover_color="#1b4332",
+            dropdown_fg_color="#0d2137",
+            dropdown_hover_color="#1a3a52"
+        )
+        self.combo.pack(fill="x")
+        self.combo.set(self.value)
+
+    def get_value(self):
+        return self.value
+
+    def set_value(self, value):
+        if value in SUBJECTS:
+            self.value = value
+            self.combo.set(value)
