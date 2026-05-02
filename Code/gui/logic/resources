@@ -1,0 +1,37 @@
+"""Управление ресурсами приложения (иконка, пути)"""
+import tkinter as tk
+from pathlib import Path
+
+def setup_icon(root):
+    """
+    Устанавливает иконку для главного окна и всех дочерних окон.
+    Приоритет: .ico -> .png -> стандартная
+    """
+    # Ищем файл в корневой папке проекта (на 2 уровня выше gui/logic/)
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    ico_path = base_dir / "icon.ico"
+    png_path = base_dir / "icon.png"
+
+    try:
+        # 1. Пробуем загрузить .ico (лучше всего для Windows)
+        if ico_path.exists():
+            root.iconbitmap(default=str(ico_path))
+            print(f"✅ Иконка .ico установлена: {ico_path.name}")
+            return True
+
+        # 2. Fallback на .png
+        elif png_path.exists():
+            img = tk.PhotoImage(file=png_path)
+            root.iconphoto(True, img)
+            # Сохраняем ссылку, чтобы сборщик мусора не удалил картинку
+            root.icon_image = img
+            print(f"✅ Иконка .png установлена: {png_path.name}")
+            return True
+
+        else:
+            print("⚠️ Иконка не найдена в корне проекта.")
+            return False
+
+    except Exception as e:
+        print(f"❌ Ошибка при установке иконки: {e}")
+        return False
