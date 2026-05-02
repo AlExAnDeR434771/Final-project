@@ -1,0 +1,96 @@
+"""Таблица результатов олимпиад"""
+import customtkinter as ctk
+from tkinter import ttk
+
+class OlympiadTable(ctk.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
+        self._create_treeview()
+        self._apply_styles()
+
+    def _create_treeview(self):
+        """Создание таблицы с прокруткой"""
+        container = ctk.CTkFrame(self, fg_color="transparent")
+        container.pack(fill="both", expand=True)
+
+        columns = ("№", "Название", "Описание", "Сайт")
+        self.tree = ttk.Treeview(container, columns=columns, show="headings", height=12)
+
+        # Настройка колонок
+        self.tree.heading("№", text="№")
+        self.tree.column("№", width=50, anchor="center")
+
+        self.tree.heading("Название", text="Название")
+        self.tree.column("Название", width=350, anchor="w")
+
+        self.tree.heading("Описание", text="Описание")
+        self.tree.column("Описание", width=500, anchor="w")
+
+        self.tree.heading("Сайт", text="Сайт")
+        self.tree.column("Сайт", width=120, anchor="center")
+
+        # Скроллбар
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        self.tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+    def _apply_styles(self):
+        """Применение стилей с выпуклыми заголовками"""
+        style = ttk.Style()
+        style.theme_use('default')
+
+        # Основная таблица
+        style.configure("Treeview",
+            background="#0d2137",
+            foreground="#7ec8e3",
+            fieldbackground="#0d2137",
+            borderwidth=2,
+            relief="raised",
+            font=("Arial", 11),
+            rowheight=60)
+
+        # ✅ ВЫПУКЛЫЕ ЗАГОЛОВКИ
+        style.configure("Treeview.Heading",
+            background="#1b4332",
+            foreground="#4a9eff",
+            font=("Arial", 12, "bold"),
+            relief="raised",
+            borderwidth=2,
+            padding=5)
+
+        # Выделение строки
+        style.map("Treeview",
+            background=[("selected", "#2d6a4f")],
+            foreground=[("selected", "#ffffff")])
+
+    def load(self, olympiads: list):
+        """Загрузка данных в таблицу"""
+        self.clear()
+
+        style = ttk.Style()
+        style.configure("Treeview",
+            background="#0d2137",
+            foreground="#7ec8e3",
+            font=("Arial", 11))
+
+        for i, (name, desc, url) in enumerate(olympiads, 1):
+            name_display = (name[:60] + "...\n" + name[60:120]) if len(name) > 60 else name
+            desc_display = (desc[:80] + "...\n" + desc[80:160]) if len(desc) > 80 else desc
+
+            self.tree.insert("", "end", values=(i, name_display, desc_display, url))
+
+    def clear(self):
+        """Очистка таблицы"""
+        self.tree.delete(*self.tree.get_children())
+
+    def show_empty(self, msg: str = "🔍 По вашему фильтру ничего не найдено"):
+        """Показ сообщения при отсутствии результатов"""
+        self.clear()
+        self.tree.insert("", "end", values=("", msg, "", ""))
+
+        style = ttk.Style()
+        style.configure("Treeview",
+            foreground="#ff6b6b",
+            font=("Arial", 13, "bold"))
