@@ -1,0 +1,86 @@
+"""Форма входа/регистрации с независимыми кнопками для паролей"""
+import customtkinter as ctk
+
+class LoginForm(ctk.CTkFrame):
+    def __init__(self, master, mode="login"):
+        super().__init__(master, fg_color="transparent")
+        self.mode = mode
+        self._create_widgets()
+        self._pack_widgets()
+
+    def _create_widgets(self):
+        # 1. Логин
+        self.login_entry = ctk.CTkEntry(self, placeholder_text="Логин", width=380, height=40, font=ctk.CTkFont(size=14))
+
+        # 2. Пароль + Кнопка "глаз" №1
+        self.pwd_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.pwd_entry = ctk.CTkEntry(self.pwd_frame, placeholder_text="Пароль", show="*", width=360, height=40, font=ctk.CTkFont(size=14))
+        self.pwd_entry.pack(side="left", fill="x", expand=True)
+        # Эта кнопка управляет только self.pwd_entry
+        self.pwd_toggle = ctk.CTkButton(self.pwd_frame, text="👁️", width=40, height=40, command=self._toggle_pwd1, fg_color="transparent", font=ctk.CTkFont(size=16))
+        self.pwd_toggle.pack(side="right", padx=5)
+
+        # 3. Подтверждение пароля + Кнопка "глаз" №2
+        self.confirm_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.confirm_entry = ctk.CTkEntry(self.confirm_frame, placeholder_text="Повторите пароль", show="*", width=360, height=40, font=ctk.CTkFont(size=14))
+        self.confirm_entry.pack(side="left", fill="x", expand=True)
+        # Эта кнопка управляет только self.confirm_entry
+        self.confirm_toggle = ctk.CTkButton(self.confirm_frame, text="👁️", width=40, height=40, command=self._toggle_pwd2, fg_color="transparent", font=ctk.CTkFont(size=16))
+        self.confirm_toggle.pack(side="right", padx=5)
+
+        # 4. Доп. поля (только для регистрации)
+        self.fio_entry = ctk.CTkEntry(self, placeholder_text="ФИО (Фамилия Имя Отчество)", width=380, height=40, font=ctk.CTkFont(size=14))
+        self.dob_entry = ctk.CTkEntry(self, placeholder_text="Дата рождения (ДД.ММ.ГГГГ)", width=380, height=40, font=ctk.CTkFont(size=14))
+        self.agreement_var = ctk.BooleanVar(value=False)
+        self.agreement_cb = ctk.CTkCheckBox(self, text="✓ Даю согласие на обработку ПДн", variable=self.agreement_var, font=ctk.CTkFont(size=12))
+
+    def _pack_widgets(self):
+        self.login_entry.pack(fill="x", pady=8)
+        self.pwd_frame.pack(fill="x", pady=8)
+        self._update_visibility()
+
+    def _toggle_pwd1(self):
+        """Переключает видимость ТОЛЬКО первого пароля"""
+        is_hidden = self.pwd_entry.cget("show") == "*"
+        show_char = "" if is_hidden else "*"
+        icon = "🙈" if is_hidden else "👁️"
+
+        self.pwd_entry.configure(show=show_char)
+        self.pwd_toggle.configure(text=icon)
+
+    def _toggle_pwd2(self):
+        """Переключает видимость ТОЛЬКО второго пароля"""
+        is_hidden = self.confirm_entry.cget("show") == "*"
+        show_char = "" if is_hidden else "*"
+        icon = "🙈" if is_hidden else "👁️"
+
+        self.confirm_entry.configure(show=show_char)
+        self.confirm_toggle.configure(text=icon)
+
+    def toggle(self):
+        """Переключает режим (Вход/Регистрация)"""
+        self.mode = "register" if self.mode == "login" else "login"
+        self._update_visibility()
+
+    def _update_visibility(self):
+        is_reg = (self.mode == "register")
+        # Показываем/скрываем поля регистрации
+        for w in [self.confirm_frame, self.fio_entry, self.dob_entry, self.agreement_cb]:
+            if is_reg: w.pack(fill="x", pady=8)
+            else: w.pack_forget()
+
+        # При смене режима сбрасываем скрытие паролей для безопасности
+        self.pwd_entry.configure(show="*")
+        self.pwd_toggle.configure(text="👁️")
+        self.confirm_entry.configure(show="*")
+        self.confirm_toggle.configure(text="👁️")
+
+    def get_data(self):
+        return {
+            "login": self.login_entry.get(),
+            "password": self.pwd_entry.get(),
+            "confirm": self.confirm_entry.get() if self.mode == "register" else "",
+            "fio": self.fio_entry.get() if self.mode == "register" else "",
+            "dob": self.dob_entry.get() if self.mode == "register" else "",
+            "agreement": self.agreement_var.get() if self.mode == "register" else True
+        }
