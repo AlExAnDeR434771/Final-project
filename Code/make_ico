@@ -10,3 +10,30 @@ if os.path.exists("icon.png"):
     print("✅ Файл icon.ico успешно создан!")
 else:
     print("❌ Ошибка: Файл icon.png не найден в папке проекта.")
+
+
+# make_ico.py
+from PIL import Image
+import os
+
+if os.path.exists("icon.png"):
+    try:
+        img = Image.open("icon.png")
+
+        # 1. Обязательно конвертируем в RGBA (с прозрачностью), чтобы Windows не сделала черный фон
+        if img.mode != 'RGBA':
+            img = img.convert('RGBA')
+
+        # 2. Сохраняем с лучшим алгоритмом сжатия (LANCZOS)
+        # Добавили 64x64 и 128x128 для плавности на 4K экранах
+        img.save("icon.ico", format="ICO",
+                 sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)],
+                 resample=Image.Resampling.LANCZOS)
+
+        print("✅ Файл icon.ico успешно создан! (Высокое качество)")
+        print("💡 Совет: Для идеала убедитесь, что исходный icon.png был >512x512 пикселей.")
+
+    except Exception as e:
+        print(f"❌ Ошибка при создании иконки: {e}")
+else:
+    print("❌ Ошибка: icon.png не найден в папке проекта.")
