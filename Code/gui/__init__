@@ -1,4 +1,3 @@
-# Пакет графического интерфейса
-from .app import SSORApp
-
-__all__ = ['SSORApp']
+# Пакет окон приложения
+from .login_win import LoginWindow
+from .main_win import MainWindow
