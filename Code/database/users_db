@@ -1,0 +1,45 @@
+"""Управление пользователями (Сохранение в БД)"""
+import csv
+from config import DB_USERS, DATA_DIR
+from crypto.hashing import hash_password, verify_password
+from crypto.cipher import encrypt_data, decrypt_data
+
+def init_db():
+    """Создает папку data и файл users.csv, если их нет"""
+    DATA_DIR.mkdir(exist_ok=True)
+    if not DB_USERS.exists():
+        # Записываем заголовки один раз
+        DB_USERS.write_text("login,pwd_hash,fio_enc,dob,agreement\n", encoding="utf-8")
+
+def register_user(login: str, pwd: str, fio: str, dob: str, agreement: bool):
+    """Сохраняет нового пользователя в CSV"""
+    init_db()
+    # Режим "a" добавляет строку в конец файла
+    with open(DB_USERS, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        # Хешируем пароль и шифруем ФИО
+        writer.writerow([
+            login,
+            hash_password(pwd),
+            encrypt_data(fio),
+            dob,
+            str(agreement)
+        ])
+    print(f"✅ Пользователь {login} сохранен в {DB_USERS}")
+
+def authenticate_user(login: str, pwd: str) -> dict:
+    """Проверяет логин и пароль"""
+    init_db()
+    ERR = {"success": False, "message": "Неверный логин или пароль"}
+    try:
+        with open(DB_USERS, "r", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["login"] == login:
+                    if verify_password(r["pwd_hash"], pwd):
+                        fio = decrypt_data(r["fio_enc"])
+                        return {"success": True, "login": login, "fio": fio}
+                    return ERR
+        return ERR
+    except Exception as e:
+        print(f"❌ Ошибка чтения БД: {e}")
+        return ERR
