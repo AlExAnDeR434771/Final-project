@@ -1,1 +1,7 @@
+"""Точка входа в приложение SSOR"""
+from gui.app_core import SSORApp
 
+if __name__ == "__main__":
+    print("🚀 Запуск SSOR...")
+    app = SSORApp()
+    app.run()
