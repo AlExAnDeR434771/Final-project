@@ -1,8 +1,6 @@
 # Пакет переиспользуемых виджетов
-from .login_form import LoginForm
-from .dashboard_header import DashboardHeader
+from .auth_form import AuthForm
+from .olymp_table import OlympiadTable
 from .search_panel import SearchPanel
-from .ol_table import OlympiadTable
 from .status_bar import StatusBar
-
-__all__ = ['LoginForm', 'DashboardHeader', 'SearchPanel', 'OlympiadTable', 'StatusBar']
+from .calendar import CalendarWidget
