@@ -1,33 +1,16 @@
-# Поиск внешних URL
-import time, warnings
-from urllib.parse import urlparse
-from config import REQUEST_TIMEOUT
-from database.db_ol import init, get_olympiads, update_url
-warnings.filterwarnings("ignore", message=".*renamed to ddgs.*")
+"""Загрузка HTML со страниц"""
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-def _is_valid(url: str) -> bool:
-    if not url or url in ("Не найдено", "Ошибка поиска"): return False
-    domain = urlparse(url).netloc.lower().replace('www.', '')
-    blocked = ['olimpiada.ru', 'vk.com', 'youtube.com', 'rutube.ru', 't.me', 'wikipedia.org', 'kp.ru', 'ucheba.ru', 'postupi.online']
-    return not any(b in domain for b in blocked)
-
-def _find_url(name: str, desc: str) -> str:
-    q = f"олимпиада {name} {desc.split('.')[0][:40]} официальный сайт"
+def fetch_html(url: str) -> str:
+    session = requests.Session()
+    session.mount("https://", HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1)))
+    session.headers.update({"User-Agent": "SSOR/1.0 (+https://github.com/ssor)"})
     try:
-        from ddgs import DDGS
-        with DDGS() as ddgs:
-            for r in ddgs.text(q, max_results=5, region='ru-ru'):
-                if _is_valid(r.get('href', '')): return r['href']
-    except: pass
-    return "Не найдено"
-
-def find_urls(filter_tag: str) -> list[tuple]:
-    init()
-    res = []
-    for name, desc, url in get_olympiads(filter_tag):
-        if url and _is_valid(url): res.append((name, desc, url)); continue
-        found = _find_url(name, desc)
-        res.append((name, desc, found))
-        if _is_valid(found): update_url(filter_tag, name, found)
-        time.sleep(0.8)
-    return res
+        resp = session.get(url, timeout=10)
+        resp.raise_for_status()
+        return resp.text
+    except Exception as e:
+        print(f"❌ Network error: {e}")
+        return ""
