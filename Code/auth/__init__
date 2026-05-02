@@ -1,4 +1,2 @@
 # Пакет аутентификации
-from .registry import AuthManager
-
-__all__ = ['AuthManager']
+from .auth_handler import AuthHandler
