@@ -1,0 +1,28 @@
+"""Фильтр выездных школ"""
+import customtkinter as ctk
+
+
+class ResidentialFilter(ctk.CTkFrame):
+    def __init__(self, parent):
+        super().__init__(parent, fg_color="transparent")
+
+        self.value = False
+
+        self.checkbox = ctk.CTkCheckBox(
+            self,
+            text="🏕️ Только выездные школы",
+            font=ctk.CTkFont(size=12),
+            text_color="#7ec8e3",
+            fg_color="#2d6a4f",
+            hover_color="#1b4332",
+            border_color="#4a9eff",
+            checkbox_width=20,
+            checkbox_height=20
+        )
+        self.checkbox.pack(anchor="w", pady=10)
+
+    def get_value(self):
+        return self.checkbox.get()
+
+    def set_value(self, value):
+        self.checkbox.set(bool(value))
