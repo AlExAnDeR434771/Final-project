@@ -1,0 +1,56 @@
+"""Виджет календаря для выбора даты"""
+import customtkinter as ctk
+import calendar
+from datetime import datetime
+
+class CalendarWidget(ctk.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color="#0d2137", corner_radius=12)
+        self.selected = None
+        self._build()
+        self._update_days()
+
+    def _build(self):
+        top = ctk.CTkFrame(self, fg_color="transparent")
+        top.pack(fill="x", padx=15, pady=8)
+        months = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"]
+        self.yr = ctk.CTkComboBox(top, values=[str(y) for y in range(2024,2030)], width=90, font=ctk.CTkFont(size=11))
+        self.yr.set(str(datetime.now().year))
+        self.yr.bind("<<ComboboxSelected>>", lambda _: self._update_days())
+        self.yr.pack(side="left", padx=5)
+        self.mo = ctk.CTkComboBox(top, values=months, width=110, font=ctk.CTkFont(size=11))
+        self.mo.set(months[datetime.now().month-1])
+        self.mo.bind("<<ComboboxSelected>>", lambda _: self._update_days())
+        self.mo.pack(side="left", padx=5)
+
+        grid = ctk.CTkFrame(self, fg_color="transparent")
+        grid.pack(fill="x", padx=15, pady=8)
+        for i, d in enumerate(["Пн","Вт","Ср","Чт","Пт","Сб","Вс"]):
+            ctk.CTkLabel(grid, text=d, text_color="#4a9eff", font=ctk.CTkFont(size=10, weight="bold"), width=32).grid(row=0, column=i, padx=3)
+        self.btns = []
+        for r in range(1,7):
+            for c in range(7):
+                b = ctk.CTkButton(grid, text="", width=32, height=28, fg_color="transparent", hover_color="#2d6a4f", command=lambda r=r,c=c: self._pick(r,c))
+                b.grid(row=r, column=c, padx=3, pady=3)
+                self.btns.append(b)
+
+    def _update_days(self):
+        yr, mo = int(self.yr.get()), self.mo.get()
+        mn = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].index(mo)+1
+        fd, nd = calendar.monthrange(yr, mn)
+        off = (fd-1)%7 if fd>0 else 6
+        for b in self.btns: b.configure(text="", state="disabled")
+        for d in range(1, nd+1):
+            idx = off + d - 1
+            if idx < len(self.btns): self.btns[idx].configure(text=str(d), state="normal")
+
+    def _pick(self, r, c):
+        idx = (r-1)*7 + c
+        if idx < len(self.btns) and self.btns[idx].cget("text"):
+            for b in self.btns:
+                if b.cget("text"): b.configure(fg_color="transparent")
+            self.btns[idx].configure(fg_color="#4a9eff")
+            self.selected = self.btns[idx].cget("text")
+
+    def get_date(self):
+        return f"{self.selected} {self.mo.get()} {self.yr.get()}" if self.selected else ""
