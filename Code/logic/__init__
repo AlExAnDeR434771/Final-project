@@ -1,4 +1,0 @@
-# Пакет бизнес-логики
-from .profile import ProfileService
-
-__all__ = ['ProfileService']
