@@ -1,0 +1,64 @@
+import customtkinter as ctk
+import threading
+from gui.widgets.search_panel import SearchPanel
+from gui.widgets.olymp_table import OlympiadTable
+from gui.widgets.status_bar import StatusBar
+from gui.dialogs.filter_dialog import FilterDialog
+from parsers import parse_olympiads
+
+class MainWindow:
+    def __init__(self, parent, user, on_logout):
+        self.frame = ctk.CTkFrame(parent, fg_color="#1a3a52")
+        self.frame.pack(fill="both", expand=True)
+
+        # Шапка
+        header = ctk.CTkFrame(self.frame, fg_color="#0d2137", height=65)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        ctk.CTkLabel(header, text=f"👤 {user.get('fio', user['login'])}", text_color="#7ec8e3", font=ctk.CTkFont(size=16, weight="bold")).pack(side="left", padx=25, pady=18)
+        ctk.CTkButton(header, text="🚪 Выйти", command=on_logout, width=110, height=38, fg_color="#c75b5b", font=ctk.CTkFont(size=13, weight="bold")).pack(side="right", padx=25, pady=14)
+
+        self.panel = SearchPanel(self.frame, self._open_filters, self._search)
+        self.panel.pack(fill="x", pady=15, padx=25)
+
+        self.table = OlympiadTable(self.frame)
+        self.table.pack(fill="both", expand=True, padx=25, pady=10)
+
+        self.status = StatusBar(self.frame)
+        self.status.pack(pady=8)
+        self.filters = None
+
+    def _open_filters(self):
+        # Создаем диалог
+        dialog = FilterDialog(self.frame)
+
+        # ✅ ПРАВИЛЬНОЕ ОЖИДАНИЕ: ждем, пока окно dialog закроется
+        dialog.wait_window()
+
+        # После закрытия проверяем результат
+        if dialog.result:
+            self.filters = dialog.result
+            self.panel.update_label(self.filters)
+
+    def _search(self):
+        if not self.filters:
+            return self.status.set("⚠️ Выберите фильтры")
+
+        self.status.set("🔄 Поиск...")
+        self.table.clear()
+
+        # Запуск в отдельном потоке, чтобы интерфейс не завис
+        threading.Thread(target=self._fetch, daemon=True).start()
+
+    def _fetch(self):
+        res = parse_olympiads(self.filters)
+        # Обновление интерфейса из главного потока
+        self.frame.after(0, lambda: self._show(res))
+
+    def _show(self, res):
+        if not res:
+            self.table.show_empty("🔍 Ничего не найдено")
+            self.status.set("✅ Олимпиад не найдено")
+        else:
+            self.table.load(res)
+            self.status.set(f"✅ Найдено: {len(res)}")
