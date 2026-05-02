@@ -1,5 +1,3 @@
 # Пакет криптографии
-from .hashing import hash_streebog
-from .encrypt import encrypt_kuznyechik, decrypt_kuznyechik
-
-__all__ = ['hash_streebog', 'encrypt_kuznyechik', 'decrypt_kuznyechik']
+from .hashing import hash_password, verify_password
+from .cipher import encrypt_data, decrypt_data
