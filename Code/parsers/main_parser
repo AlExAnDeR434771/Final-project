@@ -1,0 +1,84 @@
+"""Главный оркестратор парсинга олимпиад"""
+import hashlib
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlencode
+from config import OLIMPIADA_URL, REQUEST_TIMEOUT, MAX_OLYMPIADS
+from database.olymp_db import OlympiadsDatabase  # ✅ Импорт класса
+
+# Инициализация объекта БД (можно сделать глобальным или локальным в функции)
+db = OlympiadsDatabase()
+
+def _build_url(filters: dict) -> str:
+    """Формирует URL запроса на основе фильтров"""
+    params = {}
+    subj = filters.get("subject", "Все предметы")
+    if subj != "Все предметы":
+        params["subject"] = subj.lower()
+
+    grade = filters.get("grade", "Любой")
+    if grade != "Любой":
+        params["grade"] = grade
+
+    fmt = filters.get("format", "Все")
+    if fmt == "Командные":
+        params["team"] = "1"
+    elif fmt == "Личные":
+        params["individual"] = "1"
+
+    if filters.get("residential"):
+        params["residential"] = "1"
+
+    query = urlencode(params, encoding='utf-8')
+    return f"{OLIMPIADA_URL}?{query}" if query else OLIMPIADA_URL
+
+def parse_olympiads(filter_tag: str, filters: dict = None) -> list:
+    """
+    Основная функция парсинга:
+    1. Проверяет кэш в БД.
+    2. Если нет — делает запрос к сайту.
+    3. Сохраняет результат в БД.
+    """
+    print(f"📥 Парсинг для тега: {filter_tag}")
+
+    # 1. Проверяем кэш
+    cached_results = db.get(filter_tag)
+    if cached_results:
+        print(f"💾 Найдено в кэше: {len(cached_results)} олимпиад")
+        return cached_results
+
+    # 2. Кэш пуст — делаем запрос
+    url = _build_url(filters) if filters else OLIMPIADA_URL
+    print(f"🔗 Запрос к сайту: {url}")
+
+    headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'ru-RU'}
+    olympiads = []
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        cards = soup.find_all('div', class_='olimpiada')
+
+        for card in cards:
+            info = card.find('div', class_='o-info')
+            if info:
+                title = info.find('a').get_text(strip=True) if info.find('a') else "Без названия"
+                desc = info.get_text(strip=True)[len(title):].strip()[:100] + "..."
+                link = info.find('a')['href'] if info.find('a') else "#"
+                olympiads.append((title, desc, link))
+
+        # Ограничиваем количество
+        olympiads = olympiads[:MAX_OLYMPIADS]
+        print(f"✅ Извлечено: {len(olympiads)} олимпиад")
+
+    except Exception as e:
+        print(f"❌ Ошибка парсинга: {e}")
+        olympiads = []
+
+    # 3. Сохраняем в кэш (даже если пусто, чтобы не спамить запросами)
+    db.save(filter_tag, olympiads)
+    print(f"💾 Сохранено в кэш: {len(olympiads)} записей")
+
+    return olympiads
