@@ -1,0 +1,77 @@
+"""Главный класс приложения SSOR"""
+"""Главный класс приложения SSOR (управление логикой интерфейса)"""
+import customtkinter as ctk
+import traceback
+from .resources import setup_icon
+from ..windows.login_win import LoginWindow
+from ..windows.main_win import MainWindow
+from auth import AuthManager, ProfileManager
+
+
+class SSORApp:
+    def __init__(self):
+        print("🔧 Инициализация SSORApp...")
+        self.root = ctk.CTk()
+        self.auth = AuthManager()
+        self.profile = ProfileManager()
+        self.current_user = None
+
+        self._setup_window()
+        print("✅ SSORApp инициализирован")
+        self._show_login()
+
+    def _setup_window(self):
+        self.root.title("SSOR — Поиск олимпиад")
+        self.root.geometry("1100x750")
+        self.root.minsize(900, 650)
+        self.root.configure(fg_color="#1a3a52")
+
+        setup_icon(self.root)
+
+        from ..styles.theme import apply_theme
+        apply_theme()
+
+    def _show_login(self):
+        self._clear_current_window()
+        print("🔐 Показываем окно входа...")
+        self.login_window = LoginWindow(
+            parent=self.root,
+            on_success=self._on_auth_success,
+            auth_manager=self.auth
+        )
+
+    def _show_main(self, user_data: dict):
+        self._clear_current_window()
+        self.main_window = MainWindow(
+            parent=self.root,
+            user=user_data,
+            on_logout=self._on_logout
+        )
+
+    def _clear_current_window(self):
+        """Безопасно удаляет текущее активное окно"""
+        for attr in ['login_window', 'main_window']:
+            if hasattr(self, attr):
+                win = getattr(self, attr)
+                if hasattr(win, 'frame') and win.frame.winfo_exists():
+                    win.frame.destroy()
+
+    def _on_auth_success(self, user_data: dict):
+        try:
+            print(f"🎉 Аутентификация успешна: {user_data.get('login')}")
+            self.current_user = user_data
+            if user_data.get("is_existing"):
+                user_data["fio"] = self.profile.load_fio(user_data["login"]) or "Пользователь"
+            self._show_main(user_data)
+        except Exception as e:
+            print(f"❌ Ошибка входа: {e}")
+            traceback.print_exc()
+
+    def _on_logout(self):
+        print("🚪 Выход в систему...")
+        self.current_user = None
+        self._show_login()
+
+    def run(self):
+        print(" Запуск mainloop...")
+        self.root.mainloop()
