@@ -1,11 +1,17 @@
+# Тёмная сине-зелёная тема
 import customtkinter as ctk
 
-COLORS = {"primary": "#1a3a52", "secondary": "#0d2137",
-          "accent": "#4a9eff", "success": "#2d6a4f",
-          "success_hover": "#1b4332", "warning": "#d4a574",
-          "error": "#c75b5b", "text_primary": "#7ec8e3",
-          "text_secondary": "#5a9fb8", "background": "#1a3a52",
-          "surface": "#0d2137"}
+COLORS = {
+    "bg_primary": "#1a3a52",      # Тёмно-синий фон
+    "bg_secondary": "#0d2137",    # Очень тёмный
+    "accent": "#2d6a4f",          # Зелёный
+    "accent_hover": "#1b4332",    # Тёмно-зелёный
+    "text_primary": "#7ec8e3",    # Голубой текст
+    "text_secondary": "#4a9eff",  # Яркий голубой
+    "border": "#2d6a4f",          # Границы
+    "success": "#2d6a4f",         # Успех
+    "error": "#c75b5b",           # Ошибка
+}
 FONTS = {"title": ctk.CTkFont(family="Arial", size=24,
                               weight="bold"),
          "heading": ctk.CTkFont(family="Arial", size=16,
